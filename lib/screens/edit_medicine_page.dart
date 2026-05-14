@@ -9,7 +9,7 @@ import '../models/medicine_model.dart';
 import '../providers/medicine_provider.dart';
 import '../utils/app_colors.dart';
 import '../widgets/custom_textfield.dart';
-import 'medical_documents_page.dart';
+import 'prescriptions/medical_documents_page.dart';
 
 class EditMedicinePage extends StatefulWidget {
   final Medicine medicine;
@@ -435,7 +435,10 @@ class _EditMedicinePageState extends State<EditMedicinePage> {
         prefixIcon: Icon(Icons.description_outlined, color: AppColors.primary),
       ),
       items: [
-        const DropdownMenuItem(value: '', child: Text('No prescription linked')),
+        const DropdownMenuItem(
+          value: '',
+          child: Text('No prescription linked'),
+        ),
         ...prescriptions.map(
           (title) => DropdownMenuItem(value: title, child: Text(title)),
         ),
@@ -602,7 +605,9 @@ class _EditMedicinePageState extends State<EditMedicinePage> {
           children: [
             Expanded(child: _buildHeader(title)),
             Icon(
-              isExpanded ? Icons.remove_circle_rounded : Icons.add_circle_rounded,
+              isExpanded
+                  ? Icons.remove_circle_rounded
+                  : Icons.add_circle_rounded,
               color: AppColors.primary,
             ),
           ],

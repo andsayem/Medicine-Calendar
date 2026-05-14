@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'package:flutter/material.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
 class OcrMedicineSuggestion {
@@ -18,7 +18,18 @@ class PrescriptionOcrService {
   PrescriptionOcrService._();
 
   static final RegExp _dosePattern = RegExp(
-    r'(\d+\s*(mg|mcg|g|ml)|\d+\s*\+\s*\d+\s*\+\s*\d+|tab|tablet|cap|capsule|syrup|drop|inj|injection|cream)',
+    r'(\d+\s*(mg|mcg|g|ml)(\s*\+\s*\d+\s*(mg|mcg|g|ml))*'
+    r'|\d+\s*\+\s*\d+\s*\+\s*\d+'
+    r'|tab\.?|tablet\.?|cap\.?|capsule|syrup|drop|inj\.?|injection|cream|ointment)',
+    caseSensitive: false,
+  );
+
+  static final RegExp _medicineRequiredPattern = RegExp(
+    r'(\d+\s*(mg|mcg|g|ml)(\s*\+\s*\d+\s*(mg|mcg|g|ml))*'
+    r'|\d+\s*\+\s*\d+\s*\+\s*\d+'
+    r'|\btab\.?\b|\btablet\.?\b|\bcap\.?\b|\bcapsule\b|\bsyrup\b'
+    r'|\bdrop\b|\binj\.?\b|\binjection\b|\bcream\b|\bointment\b'
+    r'|\binhaler\b|\bpuff\b|\brespule\b)',
     caseSensitive: false,
   );
 
@@ -39,6 +50,41 @@ class PrescriptionOcrService {
     'diagnosis',
     'hospital',
     'clinic',
+    'cbc',
+    'blood',
+    'urine',
+    'x-ray',
+    'xray',
+    'ecg',
+    'eeg',
+    'ultrasound',
+    'usg',
+    'mri',
+    'ct',
+    'scan',
+    'culture',
+    'fbs',
+    'ppbs',
+    'hba1c',
+    'lipid',
+    'profile',
+    'tsh',
+    'serum',
+    'creatinine',
+    'bilirubin',
+    'sgpt',
+    'sgot',
+    'cholesterol',
+    'triglyceride',
+    'wbc',
+    'rbc',
+    'platelet',
+    'hemoglobin',
+    'hb',
+    'esr',
+    'crp',
+    'stool',
+    'sputum',
   ];
 
   static Future<List<OcrMedicineSuggestion>> scanImages(
@@ -50,15 +96,49 @@ class PrescriptionOcrService {
     try {
       for (final path in imagePaths) {
         if (path.trim().isEmpty || !File(path).existsSync()) continue;
+
         final inputImage = InputImage.fromFilePath(path);
         final recognizedText = await recognizer.processImage(inputImage);
-        lines.addAll(recognizedText.text.split('\n'));
+
+        // ✅ Image size বের করি
+        final imageSize = await _getImageSize(path);
+        final imgWidth = imageSize.width;
+        final imgHeight = imageSize.height;
+
+        // ✅ Top 20% এবং Bottom 10% বাদ দেব (doctor info / footer)
+        final topCutoff = imgHeight * 0.20;
+        final bottomCutoff = imgHeight * 0.90;
+
+        // ✅ Left 20% এবং Right 20% বাদ দেব (tests / instructions)
+        final leftCutoff = imgWidth * 0.20;
+        final rightCutoff = imgWidth * 0.80;
+
+        for (final block in recognizedText.blocks) {
+          for (final line in block.lines) {
+            final rect = line.boundingBox;
+
+            // Center zone এর বাইরে হলে skip
+            if (rect.top < topCutoff) continue;
+            if (rect.bottom > bottomCutoff) continue;
+            if (rect.left < leftCutoff) continue;
+            if (rect.right > rightCutoff) continue;
+
+            lines.add(line.text);
+          }
+        }
       }
     } finally {
       await recognizer.close();
     }
 
     return parseLines(lines);
+  }
+
+  // ✅ Image dimensions বের করার helper
+  static Future<Size> _getImageSize(String imagePath) async {
+    final bytes = await File(imagePath).readAsBytes();
+    final decoded = await decodeImageFromList(bytes);
+    return Size(decoded.width.toDouble(), decoded.height.toDouble());
   }
 
   static List<OcrMedicineSuggestion> parseLines(List<String> lines) {
@@ -91,14 +171,23 @@ class PrescriptionOcrService {
     if (line.length < 3 || line.length > 90) return false;
 
     final lower = line.toLowerCase();
-    if (_ignoredWords.any(lower.contains)) return false;
+    if (_ignoredWords.any((w) => lower.contains(w))) return false;
+    if (RegExp(r'^[\d\s\-\/\+\.\,\(\)]+$').hasMatch(line)) return false;
 
-    return _dosePattern.hasMatch(line) ||
-        RegExp(r'^[A-Za-z][A-Za-z0-9\-\s]{2,}$').hasMatch(line);
+    final wordCount = line.trim().split(RegExp(r'\s+')).length;
+    if (wordCount > 7) return false;
+
+    return _medicineRequiredPattern.hasMatch(line);
   }
 
   static OcrMedicineSuggestion _toSuggestion(String line) {
-    final doseMatch = _dosePattern.firstMatch(line);
+    final combinedDoseMatch = RegExp(
+      r'\d+\s*(mg|mcg|g|ml)(\s*\+\s*\d+\s*(mg|mcg|g|ml))+',
+      caseSensitive: false,
+    ).firstMatch(line);
+
+    final doseMatch = combinedDoseMatch ?? _dosePattern.firstMatch(line);
+
     var name = line;
     var dosage = '';
 
@@ -108,8 +197,13 @@ class PrescriptionOcrService {
     }
 
     name = name
-        .replaceAll(RegExp(r'\b(tab|tablet|cap|capsule|syrup|drop|inj)\b',
-            caseSensitive: false), '')
+        .replaceAll(
+          RegExp(
+            r'\b(tab\.?|tablet\.?|cap\.?|capsule|syrup|drop|inj\.?|injection|ointment|cream)\b',
+            caseSensitive: false,
+          ),
+          '',
+        )
         .replaceAll(RegExp(r'[:\-]+$'), '')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();

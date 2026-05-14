@@ -8,11 +8,56 @@ import '../widgets/medicine_card.dart';
 import 'add_medicine_page.dart';
 import 'settings_page.dart';
 import 'doctors_page.dart';
-import 'medical_documents_page.dart';
+import 'prescriptions/medical_documents_page.dart';
 import 'members_page.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin {
+  bool _fabExpanded = false;
+  late AnimationController _fabController;
+  late Animation<double> _fabAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _fabController = AnimationController(
+      duration: const Duration(milliseconds: 250),
+      vsync: this,
+    );
+    _fabAnimation = CurvedAnimation(
+      parent: _fabController,
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  void dispose() {
+    _fabController.dispose();
+    super.dispose();
+  }
+
+  void _toggleFab() {
+    setState(() {
+      _fabExpanded = !_fabExpanded;
+      _fabExpanded ? _fabController.forward() : _fabController.reverse();
+    });
+  }
+
+  void _closeFab() {
+    if (_fabExpanded) {
+      setState(() {
+        _fabExpanded = false;
+        _fabController.reverse();
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,40 +66,190 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       drawer: _buildDrawer(context),
-      body: CustomScrollView(
-        slivers: [
-          _buildSliverAppBar(context, provider),
-          SliverToBoxAdapter(
+      body: GestureDetector(
+        onTap: _closeFab,
+        child: CustomScrollView(
+          slivers: [
+            _buildSliverAppBar(context, provider),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSearchBar(provider),
+                    const SizedBox(height: 24),
+                    _buildSectionHeader(provider),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            ),
+            _buildMedicineContent(provider),
+            const SliverToBoxAdapter(child: SizedBox(height: 100)),
+          ],
+        ),
+      ),
+      floatingActionButton: _buildSpeedDial(context, provider),
+    );
+  }
+
+  Widget _buildSpeedDial(BuildContext context, MedicineProvider provider) {
+    void goToPrescription() {
+      _closeFab();
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const MedicalDocumentsPage(
+            title: 'My Prescriptions',
+            table: 'prescriptions',
+          ),
+        ),
+      );
+    }
+
+    void goToAddMedicine() {
+      _closeFab();
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const AddMedicinePage()),
+      );
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        // Add Prescription option
+        ScaleTransition(
+          scale: _fabAnimation,
+          child: FadeTransition(
+            opacity: _fabAnimation,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  _buildSearchBar(provider),
-                  const SizedBox(height: 24),
-                  _buildSectionHeader(provider),
-                  const SizedBox(height: 16),
+                  GestureDetector(
+                    onTap: goToPrescription,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.shadow,
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Text(
+                        'Add Prescription',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  FloatingActionButton.small(
+                    heroTag: 'fab_prescription',
+                    onPressed: goToPrescription,
+                    backgroundColor: AppColors.secondary,
+                    child: const Icon(
+                      Icons.description_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
-          _buildMedicineContent(provider),
-          const SliverToBoxAdapter(child: SizedBox(height: 100)),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AddMedicinePage()),
-          );
-        },
-        icon: const Icon(Icons.add_rounded),
-        label: const Text(
-          'Add Medicine',
-          style: TextStyle(fontWeight: FontWeight.bold),
         ),
-      ),
+
+        // Add Medicine option
+        ScaleTransition(
+          scale: _fabAnimation,
+          child: FadeTransition(
+            opacity: _fabAnimation,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: goToAddMedicine,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.shadow,
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Text(
+                        'Add Medicine',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  FloatingActionButton.small(
+                    heroTag: 'fab_medicine',
+                    onPressed: goToAddMedicine,
+                    backgroundColor: AppColors.primary,
+                    child: const Icon(
+                      Icons.medication_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        // Main FAB
+        FloatingActionButton.extended(
+          heroTag: 'fab_main',
+          onPressed: _toggleFab,
+          backgroundColor: AppColors.primary,
+          icon: AnimatedRotation(
+            turns: _fabExpanded ? 0.125 : 0,
+            duration: const Duration(milliseconds: 250),
+            child: const Icon(Icons.add_rounded),
+          ),
+          label: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: Text(
+              _fabExpanded ? 'Close' : 'Add New',
+              key: ValueKey(_fabExpanded),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -493,10 +688,7 @@ class HomePage extends StatelessWidget {
           _buildDrawerItem(
             icon: Icons.history_rounded,
             title: 'Medicine History',
-            onTap: () {
-              // Future implementation
-              Navigator.pop(context);
-            },
+            onTap: () => Navigator.pop(context),
           ),
           const Spacer(),
           _buildDrawerItem(
@@ -520,13 +712,17 @@ class HomePage extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(24, 80, 24, 40),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.primaryDark, AppColors.primary, AppColors.secondary],
+          colors: [
+            AppColors.primaryDark,
+            AppColors.primary,
+            AppColors.secondary,
+          ],
         ),
-        borderRadius: const BorderRadius.only(bottomRight: Radius.circular(40)),
+        borderRadius: BorderRadius.only(bottomRight: Radius.circular(40)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
