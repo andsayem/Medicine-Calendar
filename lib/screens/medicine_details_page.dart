@@ -23,19 +23,47 @@ class MedicineDetailsPage extends StatelessWidget {
           SliverAppBar(
             expandedHeight: 300,
             pinned: true,
+            elevation: 0,
+            backgroundColor: AppColors.primary,
             flexibleSpace: FlexibleSpaceBar(
-              background: Hero(
-                tag: 'medicineImage-${medicine.id}',
-                child: medicine.image.isNotEmpty
-                    ? Image.file(File(medicine.image), fit: BoxFit.cover)
-                    : Container(
-                        color: AppColors.primaryLight,
-                        child: Icon(
-                          Icons.medical_services_outlined,
-                          size: 80,
-                          color: AppColors.primary,
-                        ),
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Hero(
+                    tag: 'medicineImage-${medicine.id}',
+                    child: medicine.image.isNotEmpty
+                        ? Image.file(File(medicine.image), fit: BoxFit.cover)
+                        : Container(
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  AppColors.primaryLight,
+                                  AppColors.secondaryLight,
+                                ],
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.medication_liquid_outlined,
+                              size: 80,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                  ),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withOpacity(0.10),
+                          Colors.black.withOpacity(0.38),
+                        ],
                       ),
+                    ),
+                  ),
+                ],
               ),
             ),
             actions: [
@@ -136,9 +164,9 @@ class MedicineDetailsPage extends StatelessWidget {
                     medicine.patient,
                   ),
                   _buildInfoTile(
-                    Icons.person_outline_rounded,
-                    'Doctor',
-                    medicine.doctor,
+                    Icons.description_outlined,
+                    'Related Prescription',
+                    medicine.prescription,
                   ),
                   _buildInfoTile(
                     Icons.calendar_today_outlined,
@@ -171,6 +199,7 @@ class MedicineDetailsPage extends StatelessWidget {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 12),
                   const SizedBox(height: 40),
                 ],
               ),
@@ -200,6 +229,13 @@ class MedicineDetailsPage extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.border.withOpacity(0.5)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadow,
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
       child: Row(

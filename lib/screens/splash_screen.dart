@@ -34,41 +34,72 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primary,
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.primaryDark, AppColors.primary, AppColors.secondary],
+          ),
+        ),
+        child: Stack(
           children: [
-            Hero(
-              tag: 'appLogo',
+            Positioned(
+              top: -80,
+              right: -80,
               child: Container(
-                height: 120,
-                width: 120,
+                height: 220,
+                width: 220,
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(32),
-                ),
-                child: Icon(
-                  Icons.medication_outlined,
-                  color: AppColors.primary,
-                  size: 72,
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.08),
                 ),
               ),
             ),
-            const SizedBox(height: 24),
-            const Text(
-              Constants.appName,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.w700,
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Hero(
+                    tag: 'appLogo',
+                    child: Container(
+                      height: 118,
+                      width: 118,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(34),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.18),
+                            blurRadius: 34,
+                            offset: const Offset(0, 20),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.medication_liquid_rounded,
+                        color: AppColors.primary,
+                        size: 68,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    Constants.appName,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Offline medicine tracker & reminders',
+                    style: TextStyle(color: Colors.white70, fontSize: 16),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Offline medicine tracker & reminders',
-              style: TextStyle(color: Colors.white70, fontSize: 16),
-              textAlign: TextAlign.center,
             ),
           ],
         ),

@@ -30,20 +30,7 @@ class MembersPage extends StatelessWidget {
               itemBuilder: (context, index) {
                 final member = members[index];
                 return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: AppColors.border.withOpacity(0.5),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
+                  decoration: _premiumCardDecoration(),
                   child: ListTile(
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 20,
@@ -87,8 +74,6 @@ class MembersPage extends StatelessWidget {
             ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddMemberSheet(context, provider),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
         icon: const Icon(Icons.group_add_rounded),
         label: const Text('Add Member'),
       ),
@@ -101,6 +86,21 @@ class MembersPage extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _AddMemberSheet(provider: provider),
+    );
+  }
+
+  BoxDecoration _premiumCardDecoration() {
+    return BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(22),
+      border: Border.all(color: AppColors.border.withOpacity(0.7)),
+      boxShadow: [
+        BoxShadow(
+          color: AppColors.shadow,
+          blurRadius: 22,
+          offset: const Offset(0, 12),
+        ),
+      ],
     );
   }
 }
@@ -161,7 +161,7 @@ class _AddMemberSheetState extends State<_AddMemberSheet> {
             const SizedBox(height: 16),
             CustomTextField(
               controller: _relationController,
-              label: 'Relation',
+              label: 'Relation (Optional)',
               hintText: 'e.g., Daughter, Father, Spouse',
               prefixIcon: Icon(
                 Icons.family_restroom_rounded,

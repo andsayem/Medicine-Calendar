@@ -128,6 +128,12 @@ class MedicineProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updatePrescription(MedicalDocument doc) async {
+    await _databaseHelper.updateDocument('prescriptions', doc);
+    _prescriptions = await _databaseHelper.getAllDocuments('prescriptions');
+    notifyListeners();
+  }
+
   Future<void> deletePrescription(int id) async {
     await _databaseHelper.deleteDocument('prescriptions', id);
     _prescriptions = await _databaseHelper.getAllDocuments('prescriptions');
@@ -136,6 +142,12 @@ class MedicineProvider extends ChangeNotifier {
 
   Future<void> addTestReport(MedicalDocument doc) async {
     await _databaseHelper.insertDocument('test_reports', doc);
+    _testReports = await _databaseHelper.getAllDocuments('test_reports');
+    notifyListeners();
+  }
+
+  Future<void> updateTestReport(MedicalDocument doc) async {
+    await _databaseHelper.updateDocument('test_reports', doc);
     _testReports = await _databaseHelper.getAllDocuments('test_reports');
     notifyListeners();
   }

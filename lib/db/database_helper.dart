@@ -25,7 +25,7 @@ class DatabaseHelper {
     final path = join(dbPath, fileName);
     return await openDatabase(
       path,
-      version: 4,
+      version: 6,
       onCreate: _createDatabase,
       onUpgrade: _upgradeDatabase,
     );
@@ -81,6 +81,31 @@ class DatabaseHelper {
         ALTER TABLE test_reports ADD COLUMN patient TEXT DEFAULT 'Self'
       ''');
     }
+    if (oldVersion < 5) {
+      await db.execute('''
+        ALTER TABLE prescriptions ADD COLUMN doctor TEXT DEFAULT ''
+      ''');
+      await db.execute('''
+        ALTER TABLE prescriptions ADD COLUMN medicine TEXT DEFAULT ''
+      ''');
+      await db.execute('''
+        ALTER TABLE test_reports ADD COLUMN doctor TEXT DEFAULT ''
+      ''');
+      await db.execute('''
+        ALTER TABLE test_reports ADD COLUMN medicine TEXT DEFAULT ''
+      ''');
+    }
+    if (oldVersion < 6) {
+      await db.execute('''
+        ALTER TABLE ${Constants.medicinesTable} ADD COLUMN prescription TEXT DEFAULT ''
+      ''');
+      await db.execute('''
+        ALTER TABLE prescriptions ADD COLUMN test_report TEXT DEFAULT ''
+      ''');
+      await db.execute('''
+        ALTER TABLE test_reports ADD COLUMN test_report TEXT DEFAULT ''
+      ''');
+    }
   }
 
   Future<void> _createDatabase(Database db, int version) async {
@@ -97,7 +122,8 @@ class DatabaseHelper {
         reminder_time TEXT,
         expiry_date TEXT,
         patient TEXT DEFAULT 'Self',
-        created_at TEXT
+        created_at TEXT,
+        prescription TEXT DEFAULT ''
       )
     ''');
     await db.execute('''
@@ -107,7 +133,10 @@ class DatabaseHelper {
         image TEXT,
         date TEXT,
         notes TEXT,
-        patient TEXT DEFAULT 'Self'
+        patient TEXT DEFAULT 'Self',
+        doctor TEXT DEFAULT '',
+        medicine TEXT DEFAULT '',
+        test_report TEXT DEFAULT ''
       )
     ''');
     await db.execute('''
@@ -117,7 +146,10 @@ class DatabaseHelper {
         image TEXT,
         date TEXT,
         notes TEXT,
-        patient TEXT DEFAULT 'Self'
+        patient TEXT DEFAULT 'Self',
+        doctor TEXT DEFAULT '',
+        medicine TEXT DEFAULT '',
+        test_report TEXT DEFAULT ''
       )
     ''');
     await db.execute('''
@@ -190,6 +222,16 @@ class DatabaseHelper {
   Future<int> insertDocument(String table, MedicalDocument doc) async {
     final db = await database;
     return await db.insert(table, doc.toMap());
+  }
+
+  Future<int> updateDocument(String table, MedicalDocument doc) async {
+    final db = await database;
+    return await db.update(
+      table,
+      doc.toMap(),
+      where: 'id = ?',
+      whereArgs: [doc.id],
+    );
   }
 
   Future<List<MedicalDocument>> getAllDocuments(String table) async {

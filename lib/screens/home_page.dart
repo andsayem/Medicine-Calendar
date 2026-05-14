@@ -49,8 +49,6 @@ class HomePage extends StatelessWidget {
             MaterialPageRoute(builder: (_) => const AddMedicinePage()),
           );
         },
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
         icon: const Icon(Icons.add_rounded),
         label: const Text(
           'Add Medicine',
@@ -62,7 +60,7 @@ class HomePage extends StatelessWidget {
 
   Widget _buildSliverAppBar(BuildContext context, MedicineProvider provider) {
     return SliverAppBar(
-      expandedHeight: 200,
+      expandedHeight: 242,
       floating: false,
       pinned: true,
       elevation: 0,
@@ -83,52 +81,66 @@ class HomePage extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [AppColors.primary, Color(0xFF6366F1)],
+              colors: [
+                AppColors.primaryDark,
+                AppColors.primary,
+                AppColors.secondary,
+              ],
             ),
           ),
           child: Stack(
             children: [
               Positioned(
-                right: -20,
-                top: -20,
-                child: CircleAvatar(
-                  radius: 80,
-                  backgroundColor: Colors.white.withOpacity(0.1),
+                right: -54,
+                top: -44,
+                child: Container(
+                  height: 180,
+                  width: 180,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.10),
+                  ),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 80, 24, 0),
+                padding: const EdgeInsets.fromLTRB(24, 82, 24, 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Text(
+                      provider.activeProfile == 'Self'
+                          ? 'Today for you'
+                          : 'Today for ${provider.activeProfile}',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
                     const Text(
                       'My Health Notes',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 28,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        provider.medicines.isEmpty
-                            ? 'No active medicines'
-                            : '${provider.medicines.length} Active Medicines',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
+                    const SizedBox(height: 18),
+                    Row(
+                      children: [
+                        _buildHeaderMetric(
+                          icon: Icons.medication_liquid_rounded,
+                          value: '${provider.medicines.length}',
+                          label: 'Active',
                         ),
-                      ),
+                        const SizedBox(width: 10),
+                        _buildHeaderMetric(
+                          icon: Icons.group_rounded,
+                          value: '${provider.members.length + 1}',
+                          label: 'Profiles',
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -136,6 +148,37 @@ class HomePage extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderMetric({
+    required IconData icon,
+    required String value,
+    required String label,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.16),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withOpacity(0.24)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.white, size: 18),
+          const SizedBox(width: 8),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(width: 5),
+          Text(label, style: const TextStyle(color: Colors.white70)),
+        ],
       ),
     );
   }
@@ -161,7 +204,7 @@ class HomePage extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.2),
+          color: Colors.white.withOpacity(0.18),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.white.withOpacity(0.5)),
         ),
@@ -248,26 +291,27 @@ class HomePage extends StatelessWidget {
         Expanded(
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 15,
-                  offset: const Offset(0, 5),
+                  color: AppColors.shadow,
+                  blurRadius: 22,
+                  offset: const Offset(0, 10),
                 ),
               ],
             ),
             child: TextField(
               onChanged: provider.searchMedicines,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'Search medicine...',
-                prefixIcon: const Icon(
+                prefixIcon: Icon(
                   Icons.search_rounded,
                   color: AppColors.textSecondary,
                 ),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 15),
+                contentPadding: EdgeInsets.symmetric(vertical: 15),
               ),
             ),
           ),
@@ -288,11 +332,12 @@ class HomePage extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 15,
-              offset: const Offset(0, 5),
+              color: AppColors.shadow,
+              blurRadius: 22,
+              offset: const Offset(0, 10),
             ),
           ],
         ),
@@ -348,7 +393,7 @@ class HomePage extends StatelessWidget {
         sliver: SliverGrid(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            childAspectRatio: 0.78,
+            childAspectRatio: 0.70,
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
           ),
@@ -476,7 +521,11 @@ class HomePage extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(24, 80, 24, 40),
       decoration: BoxDecoration(
-        color: AppColors.primary,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.primaryDark, AppColors.primary, AppColors.secondary],
+        ),
         borderRadius: const BorderRadius.only(bottomRight: Radius.circular(40)),
       ),
       child: Column(
@@ -487,6 +536,7 @@ class HomePage extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.2),
               shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withOpacity(0.24)),
             ),
             child: const Icon(
               Icons.health_and_safety_rounded,
@@ -518,7 +568,15 @@ class HomePage extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return ListTile(
-      leading: Icon(icon, color: AppColors.primary),
+      leading: Container(
+        height: 38,
+        width: 38,
+        decoration: BoxDecoration(
+          color: AppColors.primaryLight,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: AppColors.primary, size: 20),
+      ),
       title: Text(
         title,
         style: const TextStyle(

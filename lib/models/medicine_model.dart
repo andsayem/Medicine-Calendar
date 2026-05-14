@@ -11,6 +11,7 @@ class Medicine {
   final String expiryDate;
   final String patient;
   final String createdAt;
+  final String prescription;
 
   const Medicine({
     this.id,
@@ -25,6 +26,7 @@ class Medicine {
     required this.expiryDate,
     this.patient = 'Self',
     required this.createdAt,
+    this.prescription = '',
   });
 
   factory Medicine.fromMap(Map<String, dynamic> map) {
@@ -41,6 +43,7 @@ class Medicine {
       expiryDate: map['expiry_date'] as String? ?? '',
       patient: map['patient'] as String? ?? 'Self',
       createdAt: map['created_at'] as String? ?? '',
+      prescription: map['prescription'] as String? ?? '',
     );
   }
 
@@ -58,6 +61,7 @@ class Medicine {
       'expiry_date': expiryDate,
       'patient': patient,
       'created_at': createdAt,
+      'prescription': prescription,
     };
   }
 
@@ -74,6 +78,7 @@ class Medicine {
     String? expiryDate,
     String? patient,
     String? createdAt,
+    String? prescription,
   }) {
     return Medicine(
       id: id ?? this.id,
@@ -88,6 +93,7 @@ class Medicine {
       expiryDate: expiryDate ?? this.expiryDate,
       patient: patient ?? this.patient,
       createdAt: createdAt ?? this.createdAt,
+      prescription: prescription ?? this.prescription,
     );
   }
 }

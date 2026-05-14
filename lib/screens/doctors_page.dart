@@ -30,20 +30,7 @@ class DoctorsPage extends StatelessWidget {
               itemBuilder: (context, index) {
                 final doctor = doctors[index];
                 return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: AppColors.border.withOpacity(0.5),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
+                  decoration: _premiumCardDecoration(),
                   child: ListTile(
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 20,
@@ -103,8 +90,6 @@ class DoctorsPage extends StatelessWidget {
             ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddDoctorSheet(context, provider),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
         icon: const Icon(Icons.person_add_rounded),
         label: const Text('Add Doctor'),
       ),
@@ -117,6 +102,21 @@ class DoctorsPage extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _AddDoctorSheet(provider: provider),
+    );
+  }
+
+  BoxDecoration _premiumCardDecoration() {
+    return BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(22),
+      border: Border.all(color: AppColors.border.withOpacity(0.7)),
+      boxShadow: [
+        BoxShadow(
+          color: AppColors.shadow,
+          blurRadius: 22,
+          offset: const Offset(0, 12),
+        ),
+      ],
     );
   }
 }

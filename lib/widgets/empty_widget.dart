@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../utils/app_colors.dart';
+
 class EmptyWidget extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -17,20 +19,25 @@ class EmptyWidget extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                color: Colors.white,
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Colors.white, AppColors.primaryLight],
+                ),
                 shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFF1F5F9)),
+                border: Border.all(color: Colors.white, width: 3),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 20,
+                    color: AppColors.shadow,
+                    blurRadius: 28,
+                    offset: const Offset(0, 16),
                   ),
                 ],
               ),
               child: const Icon(
                 Icons.medication_outlined,
                 size: 64,
-                color: Color(0xFF94A3B8),
+                color: AppColors.primary,
               ),
             ),
             const SizedBox(height: 32),
@@ -39,7 +46,7 @@ class EmptyWidget extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
+                color: AppColors.textPrimary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -48,7 +55,7 @@ class EmptyWidget extends StatelessWidget {
               subtitle,
               style: const TextStyle(
                 fontSize: 14,
-                color: Color(0xFF64748B),
+                color: AppColors.textSecondary,
                 height: 1.5,
               ),
               textAlign: TextAlign.center,

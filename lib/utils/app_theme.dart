@@ -7,6 +7,7 @@ class AppTheme {
 
   static final ThemeData lightTheme = ThemeData(
     useMaterial3: true,
+    fontFamily: 'Roboto',
     colorScheme: ColorScheme.fromSeed(
       seedColor: AppColors.primary,
       brightness: Brightness.light,
@@ -17,10 +18,12 @@ class AppTheme {
       error: AppColors.accent,
     ),
     scaffoldBackgroundColor: AppColors.background,
+    visualDensity: VisualDensity.adaptivePlatformDensity,
     appBarTheme: const AppBarTheme(
       backgroundColor: AppColors.background,
       foregroundColor: AppColors.textPrimary,
       elevation: 0,
+      scrolledUnderElevation: 0,
       centerTitle: false,
       titleTextStyle: TextStyle(
         color: AppColors.textPrimary,
@@ -30,9 +33,11 @@ class AppTheme {
     ),
     cardTheme: CardThemeData(
       color: AppColors.surface,
-      elevation: 0,
+      elevation: 8,
+      shadowColor: AppColors.shadow,
+      surfaceTintColor: AppColors.surfaceTint,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
         side: const BorderSide(color: AppColors.border, width: 1),
       ),
     ),
@@ -40,6 +45,7 @@ class AppTheme {
       filled: true,
       fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      hintStyle: const TextStyle(color: AppColors.textSecondary),
       border: OutlineInputBorder(
         borderSide: const BorderSide(color: AppColors.border),
         borderRadius: BorderRadius.circular(16),
@@ -54,11 +60,28 @@ class AppTheme {
       ),
       labelStyle: const TextStyle(color: AppColors.textSecondary),
     ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        minimumSize: const Size.fromHeight(52),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+      ),
+    ),
+    floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      backgroundColor: AppColors.primary,
+      foregroundColor: Colors.white,
+      elevation: 10,
+      focusElevation: 12,
+      hoverElevation: 12,
+      shape: StadiumBorder(),
+    ),
     textTheme: const TextTheme(
       headlineMedium: TextStyle(
         color: AppColors.textPrimary,
         fontWeight: FontWeight.bold,
-        letterSpacing: -0.5,
       ),
       titleLarge: TextStyle(
         color: AppColors.textPrimary,
@@ -70,6 +93,7 @@ class AppTheme {
 
   static final ThemeData darkTheme = ThemeData(
     useMaterial3: true,
+    fontFamily: 'Roboto',
     colorScheme: ColorScheme.fromSeed(
       seedColor: AppColors.primary,
       brightness: Brightness.dark,
@@ -83,13 +107,15 @@ class AppTheme {
       backgroundColor: Color(0xFF020617),
       foregroundColor: Colors.white,
       elevation: 0,
+      scrolledUnderElevation: 0,
       centerTitle: false,
     ),
     cardTheme: CardThemeData(
       color: const Color(0xFF0F172A),
-      elevation: 0,
+      elevation: 8,
+      shadowColor: Colors.black45,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
         side: const BorderSide(color: Color(0xFF1E293B), width: 1),
       ),
     ),
@@ -99,6 +125,15 @@ class AppTheme {
       border: OutlineInputBorder(
         borderSide: const BorderSide(color: Color(0xFF1E293B)),
         borderRadius: BorderRadius.circular(16),
+      ),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        minimumSize: const Size.fromHeight(52),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     ),
   );
