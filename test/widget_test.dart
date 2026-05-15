@@ -7,8 +7,8 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
-import 'package:my_medicine_note/main.dart';
-import 'package:my_medicine_note/providers/medicine_provider.dart';
+import 'package:medi_reminder/main.dart';
+import 'package:medi_reminder/providers/medicine_provider.dart';
 
 void main() {
   testWidgets('App loads successfully', (WidgetTester tester) async {

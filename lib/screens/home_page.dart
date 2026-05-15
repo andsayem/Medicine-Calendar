@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:medi_reminder/services/notification_service.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/medicine_provider.dart';
@@ -85,6 +86,23 @@ class _HomePageState extends State<HomePage>
                 ),
               ),
             ),
+            // SliverToBoxAdapter(
+            //   child: Padding(
+            //     padding: const EdgeInsets.symmetric(
+            //       horizontal: 20,
+            //       vertical: 10,
+            //     ),
+            //     child: SizedBox(
+            //       width: double.infinity,
+            //       child: ElevatedButton(
+            //         onPressed: () {
+            //           NotificationService.instance.testBackgroundNotification();
+            //         },
+            //         child: const Text("Test Notification"),
+            //       ),
+            //     ),
+            //   ),
+            // ),
             _buildMedicineContent(provider),
             const SliverToBoxAdapter(child: SizedBox(height: 100)),
           ],
@@ -314,7 +332,7 @@ class _HomePageState extends State<HomePage>
                     ),
                     const SizedBox(height: 6),
                     const Text(
-                      'My Health Notes',
+                      'Medi Reminder',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 28,

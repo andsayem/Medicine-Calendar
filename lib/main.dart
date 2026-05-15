@@ -27,7 +27,7 @@ class MyMedicineNoteApp extends StatelessWidget {
     return Consumer<MedicineProvider>(
       builder: (context, provider, _) {
         return MaterialApp(
-          title: 'My Medicine Note',
+          title: 'Medi Reminder',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,

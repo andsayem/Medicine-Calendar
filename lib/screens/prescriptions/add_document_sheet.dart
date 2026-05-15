@@ -3,12 +3,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:my_medicine_note/models/medical_document_model.dart';
-import 'package:my_medicine_note/providers/medicine_provider.dart';
-import 'package:my_medicine_note/screens/prescriptions/ocr_medicineImport_sheet.dart';
-import 'package:my_medicine_note/services/prescription_ocr_service.dart';
-import 'package:my_medicine_note/utils/app_colors.dart';
-import 'package:my_medicine_note/widgets/custom_textfield.dart';
+import 'package:medi_reminder/models/medical_document_model.dart';
+import 'package:medi_reminder/providers/medicine_provider.dart';
+import 'package:medi_reminder/screens/prescriptions/ocr_medicineImport_sheet.dart';
+import 'package:medi_reminder/services/prescription_ocr_service.dart';
+import 'package:medi_reminder/utils/app_colors.dart';
+import 'package:medi_reminder/widgets/custom_textfield.dart';
 
 class AddDocumentSheet extends StatefulWidget {
   final String table;

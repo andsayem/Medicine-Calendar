@@ -1,12 +1,11 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
 android {
-    namespace = "com.andsayem.my_medicine_note"
+    namespace = "com.andsayem.medicineReminder"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -17,11 +16,20 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
+        jvmTarget = "17"
+    }
+
+    signingConfigs {
+        create("release") {
+            storeFile = file("keystore.jks")
+            storePassword = "AS@sayem"
+            keyAlias = "upload"
+            keyPassword = "AS@sayem"
+        }
     }
 
     defaultConfig {
-        applicationId = "com.mymedicinenote.app"
+        applicationId = "com.andsayem.medicineReminder"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -30,9 +38,11 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
+
+            // FIX ML Kit R8 ERROR
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }
@@ -43,4 +53,11 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+
+    // ML Kit dependencies
+    implementation("com.google.mlkit:text-recognition:16.0.0")
+    implementation("com.google.mlkit:text-recognition-chinese:16.0.0")
+    implementation("com.google.mlkit:text-recognition-devanagari:16.0.0")
+    implementation("com.google.mlkit:text-recognition-japanese:16.0.0")
+    implementation("com.google.mlkit:text-recognition-korean:16.0.0")
 }

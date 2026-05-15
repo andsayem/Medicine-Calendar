@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:my_medicine_note/models/medicine_model.dart';
-import 'package:my_medicine_note/providers/medicine_provider.dart';
-import 'package:my_medicine_note/services/prescription_ocr_service.dart';
-import 'package:my_medicine_note/utils/app_colors.dart';
+import 'package:medi_reminder/models/medicine_model.dart';
+import 'package:medi_reminder/providers/medicine_provider.dart';
+import 'package:medi_reminder/services/prescription_ocr_service.dart';
+import 'package:medi_reminder/utils/app_colors.dart';
 
 class OcrMedicineImportSheet extends StatefulWidget {
   final List<OcrMedicineSuggestion> suggestions;

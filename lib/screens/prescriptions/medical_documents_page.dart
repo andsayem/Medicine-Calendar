@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:my_medicine_note/screens/prescriptions/add_document_sheet.dart';
-import 'package:my_medicine_note/screens/prescriptions/document_image_viewer.dart';
+import 'package:medi_reminder/screens/prescriptions/add_document_sheet.dart';
+import 'package:medi_reminder/screens/prescriptions/document_image_viewer.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/medical_document_model.dart';
