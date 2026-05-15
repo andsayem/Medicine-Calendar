@@ -5,6 +5,7 @@ import '../models/medicine_model.dart';
 import '../models/medical_document_model.dart';
 import '../models/doctor_model.dart';
 import '../models/member_model.dart';
+import '../models/blood_pressure_model.dart';
 import '../utils/constants.dart';
 
 class DatabaseHelper {
@@ -25,13 +26,17 @@ class DatabaseHelper {
     final path = join(dbPath, fileName);
     return await openDatabase(
       path,
-      version: 6,
+      version: 7,
       onCreate: _createDatabase,
       onUpgrade: _upgradeDatabase,
     );
   }
 
-  Future<void> _upgradeDatabase(Database db, int oldVersion, int newVersion) async {
+  Future<void> _upgradeDatabase(
+    Database db,
+    int oldVersion,
+    int newVersion,
+  ) async {
     if (oldVersion < 2) {
       // Add new tables for version 2
       await db.execute('''
@@ -106,6 +111,21 @@ class DatabaseHelper {
         ALTER TABLE test_reports ADD COLUMN test_report TEXT DEFAULT ''
       ''');
     }
+    if (oldVersion < 7) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS blood_pressure(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          systolic INTEGER,
+          diastolic INTEGER,
+          pulse INTEGER,
+          date TEXT,
+          time TEXT,
+          notes TEXT DEFAULT '',
+          patient TEXT DEFAULT 'Self',
+          created_at TEXT
+        )
+      ''');
+    }
   }
 
   Future<void> _createDatabase(Database db, int version) async {
@@ -165,6 +185,19 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
         relation TEXT
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE blood_pressure(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        systolic INTEGER,
+        diastolic INTEGER,
+        pulse INTEGER,
+        date TEXT,
+        time TEXT,
+        notes TEXT DEFAULT '',
+        patient TEXT DEFAULT 'Self',
+        created_at TEXT
       )
     ''');
   }
@@ -279,5 +312,36 @@ class DatabaseHelper {
   Future<int> deleteMember(int id) async {
     final db = await database;
     return await db.delete('members', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // --- Blood Pressure ---
+
+  Future<int> insertBloodPressure(BloodPressure bp) async {
+    final db = await database;
+    return await db.insert('blood_pressure', bp.toMap());
+  }
+
+  Future<List<BloodPressure>> getAllBloodPressure() async {
+    final db = await database;
+    final results = await db.query(
+      'blood_pressure',
+      orderBy: 'date DESC, time DESC',
+    );
+    return results.map((row) => BloodPressure.fromMap(row)).toList();
+  }
+
+  Future<int> updateBloodPressure(BloodPressure bp) async {
+    final db = await database;
+    return await db.update(
+      'blood_pressure',
+      bp.toMap(),
+      where: 'id = ?',
+      whereArgs: [bp.id],
+    );
+  }
+
+  Future<int> deleteBloodPressure(int id) async {
+    final db = await database;
+    return await db.delete('blood_pressure', where: 'id = ?', whereArgs: [id]);
   }
 }

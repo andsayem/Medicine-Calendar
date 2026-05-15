@@ -85,9 +85,9 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
     );
     if (time == null) return;
 
-    final formatted = DateFormat.jm().format(
-      DateTime(0, 0, 0, time.hour, time.minute),
-    );
+    final formatted = DateFormat(
+      'HH:mm',
+    ).format(DateTime(0, 0, 0, time.hour, time.minute));
     setState(() {
       _selectedReminder = formatted;
     });

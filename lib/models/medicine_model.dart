@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 class Medicine {
   final int? id;
   final String name;
@@ -95,5 +97,15 @@ class Medicine {
       createdAt: createdAt ?? this.createdAt,
       prescription: prescription ?? this.prescription,
     );
+  }
+
+  String get formattedReminderTime {
+    if (reminderTime.isEmpty) return 'No reminder';
+    try {
+      final time = DateFormat('HH:mm').parse(reminderTime);
+      return DateFormat.jm().format(time);
+    } catch (_) {
+      return reminderTime; // fallback to raw
+    }
   }
 }

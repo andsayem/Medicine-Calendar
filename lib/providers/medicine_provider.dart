@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:medi_reminder/services/next_dose_medicine.dart';
 
 import '../db/database_helper.dart';
 import '../models/medicine_model.dart';
 import '../models/medical_document_model.dart';
 import '../models/doctor_model.dart';
 import '../models/member_model.dart';
+import '../models/blood_pressure_model.dart';
 import '../services/notification_service.dart';
 
 class MedicineProvider extends ChangeNotifier {
@@ -18,6 +20,7 @@ class MedicineProvider extends ChangeNotifier {
   List<MedicalDocument> _testReports = [];
   List<Doctor> _doctors = [];
   List<Member> _members = [];
+  List<BloodPressure> _bloodPressures = [];
   bool _isLoading = false;
   bool _isDarkMode = false;
   bool _isGridView = false;
@@ -30,15 +33,60 @@ class MedicineProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  List<Medicine> get medicines => _filteredMedicines.where((m) => m.patient == _activeProfile).toList();
-  List<MedicalDocument> get prescriptions => _prescriptions.where((d) => d.patient == _activeProfile).toList();
-  List<MedicalDocument> get testReports => _testReports.where((d) => d.patient == _activeProfile).toList();
+  List<Medicine> get medicines =>
+      _filteredMedicines.where((m) => m.patient == _activeProfile).toList();
+  List<MedicalDocument> get prescriptions =>
+      _prescriptions.where((d) => d.patient == _activeProfile).toList();
+  List<MedicalDocument> get testReports =>
+      _testReports.where((d) => d.patient == _activeProfile).toList();
   List<Doctor> get doctors => _doctors;
   List<Member> get members => _members;
+  List<BloodPressure> get bloodPressures =>
+      _bloodPressures.where((b) => b.patient == _activeProfile).toList();
   bool get isLoading => _isLoading;
   bool get isDarkMode => _isDarkMode;
   bool get isGridView => _isGridView;
 
+  // ✅ nextMedicines getter
+  List<NextDoseMedicine> get nextMedicines {
+    final now = DateTime.now();
+
+    final upcoming = medicines.where((m) => m.dosage.isNotEmpty).expand((m) {
+      final doseTimes = _getDoseTimes(m);
+      return doseTimes.map((time) {
+        final parts = time.split(':');
+        if (parts.length < 2) return null;
+
+        final hour = int.tryParse(parts[0]);
+        final minute = int.tryParse(parts[1]);
+        if (hour == null || minute == null) return null;
+
+        var next = DateTime(now.year, now.month, now.day, hour, minute);
+        if (next.isBefore(now)) {
+          next = next.add(const Duration(days: 1));
+        }
+
+        return NextDoseMedicine(medicine: m, nextDoseTime: next);
+      }).whereType<NextDoseMedicine>();
+    }).toList();
+
+    if (upcoming.isEmpty) return [];
+
+    upcoming.sort((a, b) => a.nextDoseTime.compareTo(b.nextDoseTime));
+
+    final earliestTime = upcoming.first.nextDoseTime;
+    return upcoming.where((n) => n.nextDoseTime == earliestTime).toList();
+  }
+
+  List<String> _getDoseTimes(Medicine m) {
+    final parts = m.dosage.split('+');
+    final times = <String>[];
+    if (parts.length >= 1 && parts[0].trim() != '0') times.add('08:00');
+    if (parts.length >= 2 && parts[1].trim() != '0') times.add('14:00');
+    if (parts.length >= 3 && parts[2].trim() != '0') times.add('20:00');
+    if (times.isEmpty && m.reminderTime.isNotEmpty) times.add(m.reminderTime);
+    return times;
+  }
 
   Future<void> initialize() async {
     await fetchData();
@@ -55,6 +103,7 @@ class MedicineProvider extends ChangeNotifier {
       _testReports = await _databaseHelper.getAllDocuments('test_reports');
       _doctors = await _databaseHelper.getAllDoctors();
       _members = await _databaseHelper.getAllMembers();
+      _bloodPressures = await _databaseHelper.getAllBloodPressure();
       await _notificationService.rescheduleMedicines(_medicines);
     } catch (_) {
       _medicines = [];
@@ -63,6 +112,7 @@ class MedicineProvider extends ChangeNotifier {
       _testReports = [];
       _doctors = [];
       _members = [];
+      _bloodPressures = [];
     }
 
     _isLoading = false;
@@ -183,6 +233,28 @@ class MedicineProvider extends ChangeNotifier {
   Future<void> deleteMember(int id) async {
     await _databaseHelper.deleteMember(id);
     _members = await _databaseHelper.getAllMembers();
+    notifyListeners();
+  }
+
+  // --- Blood Pressure Methods ---
+
+  Future<void> addBloodPressure(BloodPressure bp) async {
+    final createdAt = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
+    final newBP = bp.copyWith(createdAt: createdAt);
+    await _databaseHelper.insertBloodPressure(newBP);
+    _bloodPressures = await _databaseHelper.getAllBloodPressure();
+    notifyListeners();
+  }
+
+  Future<void> updateBloodPressure(BloodPressure bp) async {
+    await _databaseHelper.updateBloodPressure(bp);
+    _bloodPressures = await _databaseHelper.getAllBloodPressure();
+    notifyListeners();
+  }
+
+  Future<void> deleteBloodPressure(int id) async {
+    await _databaseHelper.deleteBloodPressure(id);
+    _bloodPressures = await _databaseHelper.getAllBloodPressure();
     notifyListeners();
   }
 }

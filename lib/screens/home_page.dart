@@ -11,6 +11,7 @@ import 'settings_page.dart';
 import 'doctors_page.dart';
 import 'prescriptions/medical_documents_page.dart';
 import 'members_page.dart';
+import 'blood_pressure_history_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -158,11 +159,11 @@ class _HomePageState extends State<HomePage>
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
+                        boxShadow: const [
                           BoxShadow(
                             color: AppColors.shadow,
                             blurRadius: 10,
-                            offset: const Offset(0, 4),
+                            offset: Offset(0, 4),
                           ),
                         ],
                       ),
@@ -213,11 +214,11 @@ class _HomePageState extends State<HomePage>
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
+                        boxShadow: const [
                           BoxShadow(
                             color: AppColors.shadow,
                             blurRadius: 10,
-                            offset: const Offset(0, 4),
+                            offset: Offset(0, 4),
                           ),
                         ],
                       ),
@@ -272,6 +273,25 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildSliverAppBar(BuildContext context, MedicineProvider provider) {
+    final nextMedicines = provider.nextMedicines;
+
+    String formatNextDose(DateTime dateTime) {
+      final now = DateTime.now();
+      final diff = dateTime.difference(now);
+
+      if (diff.inSeconds <= 0) return "Due now";
+
+      if (diff.inHours > 0) {
+        return "in ${diff.inHours}h ${diff.inMinutes.remainder(60)}m";
+      } else {
+        return "in ${diff.inMinutes}m";
+      }
+    }
+
+    final nextTimeText = nextMedicines.isNotEmpty
+        ? formatNextDose(nextMedicines.first.nextDoseTime)
+        : "";
+
     return SliverAppBar(
       expandedHeight: 242,
       floating: false,
@@ -290,7 +310,7 @@ class _HomePageState extends State<HomePage>
       ],
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -315,8 +335,9 @@ class _HomePageState extends State<HomePage>
                   ),
                 ),
               ),
+
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 82, 24, 0),
+                padding: const EdgeInsets.fromLTRB(24, 73, 24, 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -330,7 +351,8 @@ class _HomePageState extends State<HomePage>
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 2),
+
                     const Text(
                       'Medi Reminder',
                       style: TextStyle(
@@ -339,7 +361,101 @@ class _HomePageState extends State<HomePage>
                         fontWeight: FontWeight.w800,
                       ),
                     ),
-                    const SizedBox(height: 18),
+
+                    const SizedBox(height: 4),
+
+                    /// 🔥 NEXT DOSAGE CARD (IMPROVED)
+                    if (nextMedicines.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.15),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.alarm_rounded,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ),
+
+                            const SizedBox(width: 5),
+
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    nextMedicines
+                                        .map((n) => n.medicine.name)
+                                        .join(', '),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    "Next dose $nextTimeText",
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(
+                              Icons.check_circle_rounded,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              "All doses completed",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                    const SizedBox(height: 10),
+
                     Row(
                       children: [
                         _buildHeaderMetric(
@@ -347,7 +463,7 @@ class _HomePageState extends State<HomePage>
                           value: '${provider.medicines.length}',
                           label: 'Active',
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 5),
                         _buildHeaderMetric(
                           icon: Icons.group_rounded,
                           value: '${provider.members.length + 1}',
@@ -371,7 +487,7 @@ class _HomePageState extends State<HomePage>
     required String label,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.16),
         borderRadius: BorderRadius.circular(18),
@@ -447,16 +563,13 @@ class _HomePageState extends State<HomePage>
         ),
       ),
       itemBuilder: (context) => [
-        PopupMenuItem(
+        const PopupMenuItem(
           value: 'Self',
           child: Row(
             children: [
               Icon(Icons.person_rounded, size: 20, color: AppColors.primary),
-              const SizedBox(width: 12),
-              const Text(
-                'Me (Self)',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+              SizedBox(width: 12),
+              Text('Me (Self)', style: TextStyle(fontWeight: FontWeight.bold)),
             ],
           ),
         ),
@@ -478,12 +591,12 @@ class _HomePageState extends State<HomePage>
           ),
         ),
         const PopupMenuDivider(),
-        PopupMenuItem(
+        const PopupMenuItem(
           value: 'ADD_NEW',
           child: Row(
             children: [
               Icon(Icons.group_add_rounded, size: 20, color: AppColors.primary),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Text(
                 '+ Add Member',
                 style: TextStyle(
@@ -507,11 +620,11 @@ class _HomePageState extends State<HomePage>
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: Colors.white),
-              boxShadow: [
+              boxShadow: const [
                 BoxShadow(
                   color: AppColors.shadow,
                   blurRadius: 22,
-                  offset: const Offset(0, 10),
+                  offset: Offset(0, 10),
                 ),
               ],
             ),
@@ -546,11 +659,11 @@ class _HomePageState extends State<HomePage>
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.white),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
               color: AppColors.shadow,
               blurRadius: 22,
-              offset: const Offset(0, 10),
+              offset: Offset(0, 10),
             ),
           ],
         ),
@@ -699,6 +812,19 @@ class _HomePageState extends State<HomePage>
                     title: 'Medical Test Reports',
                     table: 'test_reports',
                   ),
+                ),
+              );
+            },
+          ),
+          _buildDrawerItem(
+            icon: Icons.favorite_rounded,
+            title: 'Blood Pressure',
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const BloodPressureHistoryPage(),
                 ),
               );
             },

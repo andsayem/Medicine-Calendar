@@ -20,8 +20,8 @@ class MedicineCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isCompact = constraints.maxHeight.isFinite &&
-            constraints.maxHeight < 260;
+        final isCompact =
+            constraints.maxHeight.isFinite && constraints.maxHeight < 260;
         final imageHeight = isCompact ? 88.0 : 140.0;
 
         return Material(
@@ -102,7 +102,10 @@ class MedicineCard extends StatelessWidget {
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [AppColors.primaryLight, AppColors.secondaryLight],
+                        colors: [
+                          AppColors.primaryLight,
+                          AppColors.secondaryLight,
+                        ],
                       ),
                     ),
                     child: const Icon(
@@ -210,13 +213,15 @@ class MedicineCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.access_time_rounded, size: 16, color: AppColors.primary),
+          const Icon(
+            Icons.access_time_rounded,
+            size: 16,
+            color: AppColors.primary,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              medicine.reminderTime.isNotEmpty
-                  ? medicine.reminderTime
-                  : 'No reminder',
+              medicine.formattedReminderTime,
               style: TextStyle(
                 fontSize: isCompact ? 11 : 12,
                 fontWeight: FontWeight.w700,

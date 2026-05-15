@@ -110,14 +110,16 @@ class _EditMedicinePageState extends State<EditMedicinePage> {
       context: context,
       initialTime: widget.medicine.reminderTime.isNotEmpty
           ? TimeOfDay.fromDateTime(
-              DateFormat.jm().parse(widget.medicine.reminderTime),
+              widget.medicine.reminderTime.contains(' ')
+                  ? DateFormat.jm().parse(widget.medicine.reminderTime)
+                  : DateFormat('HH:mm').parse(widget.medicine.reminderTime),
             )
           : TimeOfDay.now(),
     );
     if (time == null) return;
-    final formatted = DateFormat.jm().format(
-      DateTime(0, 0, 0, time.hour, time.minute),
-    );
+    final formatted = DateFormat(
+      'HH:mm',
+    ).format(DateTime(0, 0, 0, time.hour, time.minute));
     setState(() {
       _selectedReminder = formatted;
     });

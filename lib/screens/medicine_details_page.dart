@@ -148,7 +148,7 @@ class MedicineDetailsPage extends StatelessWidget {
                   _buildInfoTile(
                     Icons.access_time_rounded,
                     'Reminder Time',
-                    medicine.reminderTime,
+                    medicine.formattedReminderTime,
                   ),
                   _buildInfoTile(
                     Icons.inventory_2_outlined,
