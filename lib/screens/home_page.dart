@@ -12,6 +12,7 @@ import 'doctors_page.dart';
 import 'prescriptions/medical_documents_page.dart';
 import 'members_page.dart';
 import 'blood_pressure_history_page.dart';
+import 'blood_sugar_history_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -830,6 +831,19 @@ class _HomePageState extends State<HomePage>
             },
           ),
           _buildDrawerItem(
+            icon: Icons.opacity_rounded,
+            title: 'Blood Sugar',
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const BloodSugarHistoryPage(),
+                ),
+              );
+            },
+          ),
+          _buildDrawerItem(
             icon: Icons.history_rounded,
             title: 'Medicine History',
             onTap: () => Navigator.pop(context),
@@ -886,7 +900,7 @@ class _HomePageState extends State<HomePage>
           ),
           const SizedBox(height: 20),
           const Text(
-            'My Medicine Note',
+            'Medi Reminder',
             style: TextStyle(
               color: Colors.white,
               fontSize: 20,

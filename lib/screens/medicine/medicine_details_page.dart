@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import '../models/medicine_model.dart';
-import '../providers/medicine_provider.dart';
-import '../screens/edit_medicine_page.dart';
-import '../utils/app_colors.dart';
+import '../../models/medicine_model.dart';
+import '../../providers/medicine_provider.dart';
+import '../edit_medicine_page.dart';
+import '../../utils/app_colors.dart';
 
 class MedicineDetailsPage extends StatelessWidget {
   final Medicine medicine;

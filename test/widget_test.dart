@@ -20,6 +20,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('My Medicine Note'), findsWidgets);
+    expect(find.text('Medi Reminder'), findsWidgets);
   });
 }

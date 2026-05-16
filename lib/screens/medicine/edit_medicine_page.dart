@@ -2,42 +2,41 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:medi_reminder/models/medicine_model.dart';
+import 'package:medi_reminder/providers/medicine_provider.dart';
+import 'package:medi_reminder/screens/prescriptions/medical_documents_page.dart';
+import 'package:medi_reminder/utils/app_colors.dart';
+import 'package:medi_reminder/widgets/custom_textfield.dart';
+import 'package:provider/provider.dart';
 
-import '../models/medicine_model.dart';
-import '../providers/medicine_provider.dart';
-import '../utils/app_colors.dart';
-import '../widgets/custom_textfield.dart';
-import 'prescriptions/medical_documents_page.dart';
-import '../services/notification_service.dart';
+class EditMedicinePage extends StatefulWidget {
+  final Medicine medicine;
 
-class AddMedicinePage extends StatefulWidget {
-  const AddMedicinePage({super.key});
+  const EditMedicinePage({super.key, required this.medicine});
 
   @override
-  State<AddMedicinePage> createState() => _AddMedicinePageState();
+  State<EditMedicinePage> createState() => _EditMedicinePageState();
 }
 
-class _AddMedicinePageState extends State<AddMedicinePage> {
+class _EditMedicinePageState extends State<EditMedicinePage> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _dosageController = TextEditingController();
-  final _quantityController = TextEditingController();
-  final _notesController = TextEditingController();
-  String _selectedPrescription = '';
-  String _selectedReminder = '';
-  String _selectedExpiry = '';
-  List<String> _savedReminderTimes = [];
-  String _imagePath = '';
+  late final TextEditingController _nameController;
+  late final TextEditingController _dosageController;
+  late final TextEditingController _quantityController;
+  late final TextEditingController _notesController;
+  late String _selectedPrescription;
+  late String _selectedReminder;
+  late String _selectedExpiry;
+  late String _imagePath;
   bool _showSchedule = false;
   bool _showOtherDetails = false;
 
-  // Quick Dosage Pattern (Morning + Afternoon + Evening)
-  int _morning = 1;
+  // Quick Dosage Pattern
+  int _morning = 0;
   int _afternoon = 0;
-  int _evening = 1;
-  bool _useQuickDosage = true;
+  int _evening = 0;
+  bool _useQuickDosage = false;
 
   final List<String> _types = [
     'Tablet',
@@ -52,19 +51,32 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
   @override
   void initState() {
     super.initState();
-    _selectedType = _types[0];
-    _loadReminderSchedule();
+    _nameController = TextEditingController(text: widget.medicine.name);
+    _dosageController = TextEditingController(text: widget.medicine.dosage);
+    _quantityController = TextEditingController(text: widget.medicine.quantity);
+    _notesController = TextEditingController(text: widget.medicine.notes);
+    _selectedPrescription = widget.medicine.prescription;
+    _selectedReminder = widget.medicine.reminderTime;
+    _selectedExpiry = widget.medicine.expiryDate;
+    _imagePath = widget.medicine.image;
+
+    _selectedType = _types.contains(widget.medicine.type)
+        ? widget.medicine.type
+        : _types[0];
+
+    _parseDosage(widget.medicine.dosage);
   }
 
-  Future<void> _loadReminderSchedule() async {
-    final schedule = await NotificationService.instance.getReminderSchedule();
-    setState(() {
-      _savedReminderTimes = schedule.map((e) {
-        final hour = (e['hour'] as int).toString().padLeft(2, '0');
-        final minute = (e['minute'] as int).toString().padLeft(2, '0');
-        return '$hour:$minute';
-      }).toList();
-    });
+  void _parseDosage(String dosage) {
+    if (RegExp(r'^\d+\+\d+\+\d+$').hasMatch(dosage)) {
+      final parts = dosage.split('+');
+      setState(() {
+        _morning = int.parse(parts[0]);
+        _afternoon = int.parse(parts[1]);
+        _evening = int.parse(parts[2]);
+        _useQuickDosage = true;
+      });
+    }
   }
 
   @override
@@ -88,17 +100,22 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
         });
       }
     } catch (_) {
-      // ignore image picker failure and remain stable
+      // ignore
     }
   }
 
   Future<void> _selectReminderTime() async {
     final time = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.now(),
+      initialTime: widget.medicine.reminderTime.isNotEmpty
+          ? TimeOfDay.fromDateTime(
+              widget.medicine.reminderTime.contains(' ')
+                  ? DateFormat.jm().parse(widget.medicine.reminderTime)
+                  : DateFormat('HH:mm').parse(widget.medicine.reminderTime),
+            )
+          : TimeOfDay.now(),
     );
     if (time == null) return;
-
     final formatted = DateFormat(
       'HH:mm',
     ).format(DateTime(0, 0, 0, time.hour, time.minute));
@@ -108,9 +125,12 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
   }
 
   Future<void> _selectExpiryDate() async {
+    final current = widget.medicine.expiryDate.isNotEmpty
+        ? DateTime.tryParse(widget.medicine.expiryDate) ?? DateTime.now()
+        : DateTime.now().add(const Duration(days: 1));
     final date = await showDatePicker(
       context: context,
-      initialDate: DateTime.now().add(const Duration(days: 1)),
+      initialDate: current,
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 3650)),
     );
@@ -122,7 +142,6 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
 
   Future<void> _saveMedicine() async {
     if (!_formKey.currentState!.validate()) return;
-
     final provider = Provider.of<MedicineProvider>(context, listen: false);
 
     // Auto-construct dosage string from pattern if enabled
@@ -130,9 +149,9 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
         ? '$_morning+$_afternoon+$_evening'
         : _dosageController.text.trim();
 
-    final medicine = Medicine(
+    final updated = widget.medicine.copyWith(
       name: _nameController.text.trim(),
-      type: _selectedType, // Use the selected type from chips
+      type: _selectedType,
       dosage: finalDosage,
       quantity: _quantityController.text.trim(),
       doctor: '',
@@ -142,13 +161,9 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
       image: _imagePath,
       reminderTime: _selectedReminder,
       expiryDate: _selectedExpiry,
-      createdAt: DateTime.now().toIso8601String(),
     );
-
-    await provider.addMedicine(medicine);
-    if (mounted) {
-      Navigator.pop(context);
-    }
+    await provider.updateMedicine(updated);
+    if (mounted) Navigator.pop(context);
   }
 
   @override
@@ -279,7 +294,7 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
                         elevation: 0,
                       ),
                       child: const Text(
-                        'Add Medicine to Note',
+                        'Update Medicine Details',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -342,7 +357,7 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Add Medicine',
+                      'Edit Medicine',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 28,
@@ -351,7 +366,7 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Keep your records updated',
+                      'Update your medicine records',
                       style: TextStyle(color: Colors.white70, fontSize: 13),
                     ),
                   ],
@@ -607,38 +622,13 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
     required String value,
     required VoidCallback onTap,
     required IconData icon,
-    bool showCountBadge = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-            if (showCountBadge)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryLight,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  _getDoseCount().toString(),
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-          ],
+        Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
         ),
         const SizedBox(height: 8),
         InkWell(
@@ -674,36 +664,8 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
             ),
           ),
         ),
-        if (showCountBadge && _savedReminderTimes.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Text(
-              _selectedReminder.isNotEmpty
-                  ? _selectedReminder
-                  : _savedReminderTimes.take(_getDoseCount()).join(' • '),
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ),
       ],
     );
-  }
-
-  int _getDoseCount() {
-    if (_useQuickDosage) {
-      var c = 0;
-      if (_morning > 0) c++;
-      if (_afternoon > 0) c++;
-      if (_evening > 0) c++;
-      return c;
-    }
-
-    final text = _dosageController.text.trim();
-    if (text.isEmpty) return 0;
-    final parts = text.split('+');
-    return parts.where((p) => p.trim() != '0' && p.trim().isNotEmpty).length;
   }
 
   Widget _buildImagePicker() {

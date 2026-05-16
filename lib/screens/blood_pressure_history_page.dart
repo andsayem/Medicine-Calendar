@@ -70,24 +70,30 @@ class _BloodPressureHistoryPageState extends State<BloodPressureHistoryPage> {
     final list = provider.bloodPressures;
 
     return Scaffold(
-      backgroundColor: const Color(0xffF4F6FB),
+      backgroundColor: AppColors.background,
 
-      // ================= APPBAR (PRIMARY FIXED) =================
       appBar: AppBar(
         backgroundColor: AppColors.primary,
         elevation: 0,
         title: const Text(
-          "Blood Pressure",
-          style: TextStyle(fontWeight: FontWeight.bold),
+          'Blood Pressure History',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+            fontSize: 20,
+          ),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
         ),
       ),
 
-      // ================= FAB =================
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppColors.primary,
         onPressed: _startAdd,
-        icon: const Icon(Icons.add),
-        label: const Text("Add BP"),
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Add Reading'),
       ),
 
       body: Column(
@@ -96,9 +102,12 @@ class _BloodPressureHistoryPageState extends State<BloodPressureHistoryPage> {
 
           Expanded(
             child: list.isEmpty
-                ? const Center(child: Text("No Records Yet"))
+                ? _buildEmptyState()
                 : ListView.builder(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 20,
+                    ),
                     itemCount: list.length,
                     itemBuilder: (context, i) {
                       final bp = list[i];
@@ -114,77 +123,135 @@ class _BloodPressureHistoryPageState extends State<BloodPressureHistoryPage> {
 
   // ================= PREMIUM CARD =================
   Widget _premiumCard(BloodPressure bp, BloodPressure? prev) {
-    final color = AppColors.primary;
-
-    int? diffSys = prev != null ? bp.systolic - prev.systolic : null;
+    final statusColor = bp.pulse != null ? Colors.red : AppColors.primary;
+    final diffSys = prev != null ? bp.systolic - prev.systolic : null;
+    final dateTime = DateFormat(
+      'MMM dd, yyyy - hh:mm a',
+    ).format(DateTime.parse('${bp.date} ${bp.time}'));
 
     return GestureDetector(
       onTap: () => _popup(bp),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 14),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: AppColors.shadow.withOpacity(0.12),
               blurRadius: 18,
-              offset: const Offset(0, 8),
+              offset: const Offset(0, 10),
             ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                _pill("SYS", bp.systolic),
-                const SizedBox(width: 10),
-                _pill("DIA", bp.diastolic),
-
-                const Spacer(),
-
-                if (diffSys != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: (diffSys >= 0 ? Colors.red : Colors.green)
-                          .withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      "${diffSys >= 0 ? '+' : ''}$diffSys",
-                      style: TextStyle(
-                        color: diffSys >= 0 ? Colors.red : Colors.green,
-                        fontWeight: FontWeight.bold,
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(18),
+              ),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 16,
+                ),
+                color: statusColor.withOpacity(0.14),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: statusColor.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.monitor_heart_rounded,
+                        size: 24,
+                        color: statusColor,
                       ),
                     ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${bp.systolic}/${bp.diastolic}',
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Pulse: ${bp.pulse ?? 'N/A'} BPM',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (diffSys != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: (diffSys >= 0 ? Colors.red : Colors.green)
+                              .withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${diffSys >= 0 ? '+' : ''}$diffSys',
+                          style: TextStyle(
+                            color: diffSys >= 0 ? Colors.red : Colors.green,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.access_time_rounded,
+                        size: 16,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        dateTime,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
-              ],
-            ),
-
-            const SizedBox(height: 10),
-
-            Row(
-              children: [
-                const Icon(Icons.access_time, size: 14),
-                const SizedBox(width: 5),
-                Text("${bp.date} • ${bp.time}"),
-              ],
-            ),
-
-            const SizedBox(height: 6),
-
-            Row(
-              children: [
-                const Icon(Icons.favorite, size: 14),
-                const SizedBox(width: 5),
-                Text("Pulse: ${bp.pulse ?? 'N/A'}"),
-              ],
+                  if (bp.notes.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      bp.notes,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ],
         ),
@@ -204,6 +271,35 @@ class _BloodPressureHistoryPageState extends State<BloodPressureHistoryPage> {
         children: [
           Text(label, style: TextStyle(fontSize: 10, color: AppColors.primary)),
           Text("$value", style: const TextStyle(fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.monitor_heart_outlined,
+            size: 80,
+            color: AppColors.primary.withOpacity(0.3),
+          ),
+          const SizedBox(height: 18),
+          const Text(
+            'No blood pressure records yet',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Monitor your blood pressure readings here.',
+            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+          ),
         ],
       ),
     );

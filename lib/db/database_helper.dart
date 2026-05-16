@@ -6,6 +6,7 @@ import '../models/medical_document_model.dart';
 import '../models/doctor_model.dart';
 import '../models/member_model.dart';
 import '../models/blood_pressure_model.dart';
+import '../models/blood_sugar_model.dart';
 import '../utils/constants.dart';
 
 class DatabaseHelper {
@@ -26,7 +27,7 @@ class DatabaseHelper {
     final path = join(dbPath, fileName);
     return await openDatabase(
       path,
-      version: 7,
+      version: 8,
       onCreate: _createDatabase,
       onUpgrade: _upgradeDatabase,
     );
@@ -126,6 +127,20 @@ class DatabaseHelper {
         )
       ''');
     }
+    if (oldVersion < 8) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS blood_sugar(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          value REAL,
+          type TEXT,
+          date TEXT,
+          time TEXT,
+          notes TEXT DEFAULT '',
+          patient TEXT DEFAULT 'Self',
+          created_at TEXT
+        )
+      ''');
+    }
   }
 
   Future<void> _createDatabase(Database db, int version) async {
@@ -193,6 +208,18 @@ class DatabaseHelper {
         systolic INTEGER,
         diastolic INTEGER,
         pulse INTEGER,
+        date TEXT,
+        time TEXT,
+        notes TEXT DEFAULT '',
+        patient TEXT DEFAULT 'Self',
+        created_at TEXT
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE blood_sugar(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        value REAL,
+        type TEXT,
         date TEXT,
         time TEXT,
         notes TEXT DEFAULT '',
@@ -287,7 +314,7 @@ class DatabaseHelper {
 
   Future<List<Doctor>> getAllDoctors() async {
     final db = await database;
-    final results = await db.query('doctors', orderBy: 'name ASC');
+    final results = await db.query('doctors', orderBy: 'name DESC');
     return results.map((row) => Doctor.fromMap(row)).toList();
   }
 
@@ -343,5 +370,36 @@ class DatabaseHelper {
   Future<int> deleteBloodPressure(int id) async {
     final db = await database;
     return await db.delete('blood_pressure', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // --- Blood Sugar ---
+
+  Future<int> insertBloodSugar(BloodSugar sugar) async {
+    final db = await database;
+    return await db.insert('blood_sugar', sugar.toMap());
+  }
+
+  Future<List<BloodSugar>> getAllBloodSugar() async {
+    final db = await database;
+    final results = await db.query(
+      'blood_sugar',
+      orderBy: 'date DESC, time DESC',
+    );
+    return results.map((row) => BloodSugar.fromMap(row)).toList();
+  }
+
+  Future<int> updateBloodSugar(BloodSugar sugar) async {
+    final db = await database;
+    return await db.update(
+      'blood_sugar',
+      sugar.toMap(),
+      where: 'id = ?',
+      whereArgs: [sugar.id],
+    );
+  }
+
+  Future<int> deleteBloodSugar(int id) async {
+    final db = await database;
+    return await db.delete('blood_sugar', where: 'id = ?', whereArgs: [id]);
   }
 }

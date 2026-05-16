@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>My Medicine Note</string>
+	<string>Medi Reminder</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,13 +15,13 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>My Medicine Note</string>
+	<string>Medi Reminder</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>NSCameraUsageDescription</key>
-	<string>My Medicine Note needs camera access to capture medicine photos.</string>
+	<string>Medi Reminder needs camera access to capture medicine photos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>My Medicine Note needs photo library access to attach medicine images.</string>
+	<string>Medi Reminder needs photo library access to attach medicine images.</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>

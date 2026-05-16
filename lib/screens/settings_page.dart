@@ -30,45 +30,55 @@ class _SettingsPageState extends State<SettingsPage> {
     required Map<String, dynamic> item,
     required MedicineProvider provider,
   }) async {
-    final hour = item['hour'] as int;
-    final minute = item['minute'] as int;
-
-    final selectedTime = await showTimePicker(
+    final selected = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay(hour: hour, minute: minute),
+      initialTime: TimeOfDay(hour: item['hour'], minute: item['minute']),
     );
 
-    if (selectedTime == null) return;
+    if (selected == null) return;
 
-    /// SAVE NEW TIME
-    await NotificationService.instance.saveReminderTime(
-      index: item['index'] as int,
-      hour: selectedTime.hour,
-      minute: selectedTime.minute,
-    );
+    try {
+      /// 1. SAVE NEW TIME
+      await NotificationService.instance.saveReminderTime(
+        index: item['index'],
+        hour: selected.hour,
+        minute: selected.minute,
+      );
 
-    /// CANCEL OLD NOTIFICATIONS
-    await NotificationService.instance.cancelAll();
+      /// 2. CLEAR OLD NOTIFICATIONS
+      await NotificationService.instance.cancelAll();
 
-    /// RESCHEDULE
-    await NotificationService.instance.rescheduleMedicines(provider.medicines);
+      /// 3. RESCHEDULE ALL MEDICINES
+      await NotificationService.instance.rescheduleMedicines(
+        provider.medicines,
+      );
 
-    /// RELOAD UI
-    _loadSchedules();
+      /// 4. REFRESH NEXT DOSE
+      await provider.refreshNextDoseMedicines();
 
-    setState(() {});
+      /// 5. REFRESH UI
+      _loadSchedules();
 
-    if (!context.mounted) return;
+      setState(() {});
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        content: Text(
-          '${item['label']} reminder updated to '
-          '${selectedTime.format(context)}',
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.primary,
+          content: Text(
+            "${item['label']} updated → ${selected.format(context)}",
+          ),
         ),
-      ),
-    );
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(backgroundColor: Colors.red, content: Text("Error: $e")),
+      );
+    }
   }
 
   @override
@@ -78,214 +88,167 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
 
-      appBar: AppBar(title: const Text('Settings'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text("Settings"),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: AppColors.primary,
+      ),
 
       body: ListView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(18),
 
         children: [
-          /// =========================
-          /// HEADER
-          /// =========================
-          Container(
-            padding: const EdgeInsets.all(22),
+          _header(),
 
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+          const SizedBox(height: 18),
 
-                colors: [
-                  AppColors.primaryDark,
-                  AppColors.primary,
-                  AppColors.secondary,
-                ],
-              ),
+          _sectionTitle("Appearance"),
 
-              borderRadius: BorderRadius.circular(24),
+          const SizedBox(height: 10),
 
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.shadow,
-                  blurRadius: 24,
-                  offset: const Offset(0, 14),
-                ),
-              ],
-            ),
-
-            child: const Row(
-              children: [
-                Icon(Icons.tune_rounded, color: Colors.white, size: 34),
-
-                SizedBox(width: 16),
-
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-
-                    children: [
-                      Text(
-                        'App Preferences',
-
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-
-                      SizedBox(height: 4),
-
-                      Text(
-                        'Personalize your medicine notebook.',
-
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 28),
-
-          /// =========================
-          /// APPEARANCE
-          /// =========================
-          _buildSectionHeader('Appearance'),
-
-          const SizedBox(height: 12),
-
-          _buildPremiumPanel(
+          _card(
             child: SwitchListTile(
-              title: const Text(
-                'Dark Mode',
-
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-
-              subtitle: const Text('Use a darker theme for the app.'),
-
               value: provider.isDarkMode,
-
-              activeThumbColor: AppColors.primary,
 
               onChanged: (_) {
                 provider.toggleTheme();
               },
+
+              activeColor: AppColors.primary,
+
+              title: const Text(
+                "Dark Mode",
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+
+              subtitle: const Text("Enable dark theme"),
             ),
           ),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: 20),
 
-          /// =========================
-          /// REMINDER SCHEDULE
-          /// =========================
-          _buildSectionHeader('Reminder Schedule'),
+          _sectionTitle("Reminder Schedule"),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
           FutureBuilder<List<Map<String, dynamic>>>(
             future: _scheduleFuture,
 
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
-                return _buildPremiumPanel(
+                return _card(
                   child: const Padding(
-                    padding: EdgeInsets.all(30),
+                    padding: EdgeInsets.all(24),
 
                     child: Center(child: CircularProgressIndicator()),
                   ),
                 );
               }
 
-              final scheduleMap = snapshot.data!;
+              final data = snapshot.data!;
 
-              return _buildPremiumPanel(
+              return _card(
                 child: Column(
-                  children: List.generate(scheduleMap.length, (i) {
-                    final item = scheduleMap[i];
+                  children: List.generate(data.length, (i) {
+                    final item = data[i];
 
-                    final hour = item['hour'] as int;
+                    final time =
+                        "${item['hour'].toString().padLeft(2, '0')}:"
+                        "${item['minute'].toString().padLeft(2, '0')}";
 
-                    final minute = item['minute'] as int;
+                    return InkWell(
+                      onTap: () => _changeReminderTime(
+                        context: context,
+                        item: item,
+                        provider: provider,
+                      ),
 
-                    final timeText =
-                        '${hour.toString().padLeft(2, '0')}:'
-                        '${minute.toString().padLeft(2, '0')}';
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 14,
+                          horizontal: 12,
+                        ),
 
-                    return Column(
-                      children: [
-                        ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 6,
-                          ),
+                        decoration: BoxDecoration(
+                          border: i != data.length - 1
+                              ? const Border(
+                                  bottom: BorderSide(color: Colors.black12),
+                                )
+                              : null,
+                        ),
 
-                          leading: Container(
-                            padding: const EdgeInsets.all(10),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
 
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryLight,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(0.1),
 
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
 
-                            child: Icon(
-                              Icons.access_time_rounded,
-                              color: AppColors.primary,
-                            ),
-                          ),
-
-                          title: Text(
-                            item['label'].toString(),
-
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-
-                          subtitle: Text('$timeText Reminder Time'),
-
-                          trailing: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 8,
-                            ),
-
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.08),
-
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-
-                            child: Text(
-                              timeText,
-
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-
+                              child: const Icon(
+                                Icons.alarm,
                                 color: AppColors.primary,
                               ),
                             ),
-                          ),
 
-                          onTap: () async {
-                            await _changeReminderTime(
-                              context: context,
-                              item: item,
-                              provider: provider,
-                            );
-                          },
+                            const SizedBox(width: 12),
+
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+
+                                children: [
+                                  Text(
+                                    item['label'],
+
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 2),
+
+                                  Text(
+                                    "Tap to change time",
+
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(0.12),
+
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+
+                              child: Text(
+                                time,
+
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-
-                        if (i != scheduleMap.length - 1)
-                          const Divider(
-                            height: 1,
-                            indent: 70,
-                            endIndent: 20,
-                            color: AppColors.border,
-                          ),
-                      ],
+                      ),
                     );
                   }),
                 ),
@@ -293,16 +256,13 @@ class _SettingsPageState extends State<SettingsPage> {
             },
           ),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: 20),
 
-          /// =========================
-          /// DATA MANAGEMENT
-          /// =========================
-          _buildSectionHeader('Data Management'),
+          _sectionTitle("Data"),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
-          _buildPremiumPanel(
+          _card(
             child: Column(
               children: [
                 ListTile(
@@ -310,75 +270,50 @@ class _SettingsPageState extends State<SettingsPage> {
                     padding: const EdgeInsets.all(8),
 
                     decoration: BoxDecoration(
-                      color: AppColors.primaryLight,
+                      color: AppColors.primary.withOpacity(0.1),
 
                       borderRadius: BorderRadius.circular(10),
                     ),
 
-                    child: Icon(
-                      Icons.backup_outlined,
-                      size: 20,
-                      color: AppColors.primary,
-                    ),
+                    child: const Icon(Icons.backup, color: AppColors.primary),
                   ),
 
-                  title: const Text(
-                    'Backup & Restore',
+                  title: const Text("Backup & Restore"),
 
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 14),
 
-                  trailing: const Icon(Icons.chevron_right_rounded),
-
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Coming soon!')),
-                    );
-                  },
+                  onTap: () {},
                 ),
 
-                const Divider(
-                  height: 1,
-                  indent: 60,
-                  endIndent: 20,
-                  color: AppColors.border,
-                ),
+                const Divider(height: 1),
 
                 ListTile(
                   leading: Container(
                     padding: const EdgeInsets.all(8),
 
                     decoration: BoxDecoration(
-                      color: Colors.amber.shade50,
+                      color: Colors.orange.withOpacity(0.1),
 
                       borderRadius: BorderRadius.circular(10),
                     ),
 
-                    child: Icon(
-                      Icons.info_outline,
-                      size: 20,
-                      color: Colors.amber.shade700,
-                    ),
+                    child: const Icon(Icons.info_outline, color: Colors.orange),
                   ),
 
-                  title: const Text(
-                    'About App',
+                  title: const Text("About App"),
 
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-
-                  trailing: const Icon(Icons.chevron_right_rounded),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 14),
 
                   onTap: () {
                     showAboutDialog(
                       context: context,
 
-                      applicationName: 'My Medicine Note',
+                      applicationName: "Medi Reminder",
 
-                      applicationVersion: '1.0.0',
+                      applicationVersion: "1.0.0",
 
                       applicationLegalese:
-                          'Offline medication tracking with reminders.',
+                          "Offline medication tracking with reminders.",
                     );
                   },
                 ),
@@ -390,38 +325,72 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 8),
+  Widget _header() {
+    return Container(
+      padding: const EdgeInsets.all(18),
 
-      child: Text(
-        title.toUpperCase(),
-
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 1.1,
-          color: AppColors.textSecondary,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
         ),
+
+        borderRadius: BorderRadius.circular(16),
+
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.25),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+
+      child: const Row(
+        children: [
+          Icon(Icons.settings, color: Colors.white, size: 30),
+
+          SizedBox(width: 12),
+
+          Expanded(
+            child: Text(
+              "App Settings",
+
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildPremiumPanel({required Widget child}) {
+  Widget _sectionTitle(String title) {
+    return Text(
+      title.toUpperCase(),
+
+      style: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.bold,
+        color: Colors.grey,
+        letterSpacing: 1.2,
+      ),
+    );
+  }
+
+  Widget _card({required Widget child}) {
     return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+
       decoration: BoxDecoration(
         color: Colors.white,
 
-        borderRadius: BorderRadius.circular(22),
-
-        border: Border.all(color: AppColors.border.withOpacity(0.7)),
+        borderRadius: BorderRadius.circular(14),
 
         boxShadow: [
-          BoxShadow(
-            color: AppColors.shadow,
-            blurRadius: 22,
-            offset: const Offset(0, 12),
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
         ],
       ),
 
