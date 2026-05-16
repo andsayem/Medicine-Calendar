@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import '../../models/medicine_model.dart';
-import '../../providers/medicine_provider.dart';
-import '../edit_medicine_page.dart';
-import '../../utils/app_colors.dart';
+import '../models/medicine_model.dart';
+import '../providers/medicine_provider.dart';
+import 'edit_medicine_page.dart';
+import '../utils/app_colors.dart';
 
 class MedicineDetailsPage extends StatelessWidget {
   final Medicine medicine;
@@ -144,6 +144,27 @@ class MedicineDetailsPage extends StatelessWidget {
                     Icons.medication_outlined,
                     'Dosage',
                     medicine.dosage,
+                  ),
+                  _buildInfoTile(
+                    Icons.repeat,
+                    'Repeat',
+                    medicine.recurrence.isNotEmpty
+                        ? medicine.recurrence
+                        : 'Daily',
+                  ),
+                  _buildInfoTile(
+                    Icons.calendar_month,
+                    'Start Date',
+                    medicine.scheduleStartDate.isNotEmpty
+                        ? medicine.scheduleStartDate
+                        : 'Not set',
+                  ),
+                  _buildInfoTile(
+                    Icons.event_available,
+                    'End Date',
+                    medicine.scheduleEndDate.isNotEmpty
+                        ? medicine.scheduleEndDate
+                        : 'Not set',
                   ),
                   _buildInfoTile(
                     Icons.access_time_rounded,

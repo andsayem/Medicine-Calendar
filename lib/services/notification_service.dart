@@ -35,7 +35,7 @@ class NotificationService {
 
     tz.setLocalLocation(tz.getLocation('Asia/Dhaka'));
 
-    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const android = AndroidInitializationSettings('@mipmap/launcher_icon');
 
     const ios = DarwinInitializationSettings();
 
@@ -215,9 +215,8 @@ class NotificationService {
     const androidDetails = AndroidNotificationDetails(
       'medicine_channel',
       'Medicine Reminder',
-
+      icon: '@mipmap/launcher_icon',
       channelDescription: 'Medicine reminder notifications',
-
       importance: Importance.max,
       priority: Priority.high,
 
@@ -238,11 +237,10 @@ class NotificationService {
 
   Future<void> showTestNotification() async {
     const androidDetails = AndroidNotificationDetails(
-      'test_channel',
-      'Test Notification',
-
-      channelDescription: 'Test notification channel',
-
+      'medicine_channel',
+      'Medicine Reminder',
+      icon: '@mipmap/launcher_icon',
+      channelDescription: 'Medicine reminder notifications',
       importance: Importance.max,
       priority: Priority.high,
 

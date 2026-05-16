@@ -27,6 +27,9 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
   final _notesController = TextEditingController();
   String _selectedPrescription = '';
   String _selectedReminder = '';
+  String _selectedRecurrence = 'Daily';
+  String _selectedStartDate = '';
+  String _selectedEndDate = '';
   String _selectedExpiry = '';
   List<String> _savedReminderTimes = [];
   String _imagePath = '';
@@ -107,6 +110,44 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
     });
   }
 
+  Future<void> _selectStartDate() async {
+    final initial = _selectedStartDate.isNotEmpty
+        ? DateTime.tryParse(_selectedStartDate) ?? DateTime.now()
+        : DateTime.now();
+    final date = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 3650)),
+    );
+    if (date == null) return;
+    setState(() {
+      _selectedStartDate = DateFormat('yyyy-MM-dd').format(date);
+      if (_selectedEndDate.isNotEmpty) {
+        final end = DateTime.tryParse(_selectedEndDate);
+        if (end != null && end.isBefore(date)) {
+          _selectedEndDate = '';
+        }
+      }
+    });
+  }
+
+  Future<void> _selectEndDate() async {
+    final first = _selectedStartDate.isNotEmpty
+        ? DateTime.tryParse(_selectedStartDate) ?? DateTime.now()
+        : DateTime.now();
+    final date = await showDatePicker(
+      context: context,
+      initialDate: first.add(const Duration(days: 1)),
+      firstDate: first,
+      lastDate: DateTime.now().add(const Duration(days: 3650)),
+    );
+    if (date == null) return;
+    setState(() {
+      _selectedEndDate = DateFormat('yyyy-MM-dd').format(date);
+    });
+  }
+
   Future<void> _selectExpiryDate() async {
     final date = await showDatePicker(
       context: context,
@@ -141,6 +182,9 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
       notes: _notesController.text.trim(),
       image: _imagePath,
       reminderTime: _selectedReminder,
+      recurrence: _selectedRecurrence,
+      scheduleStartDate: _selectedStartDate,
+      scheduleEndDate: _selectedEndDate,
       expiryDate: _selectedExpiry,
       createdAt: DateTime.now().toIso8601String(),
     );
@@ -218,6 +262,30 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
                           setState(() => _showSchedule = !_showSchedule),
                     ),
                     if (_showSchedule) ...[
+                      const SizedBox(height: 16),
+                      _buildRecurrenceDropdown(),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildActionPicker(
+                              label: 'Start Date',
+                              value: _selectedStartDate,
+                              onTap: _selectStartDate,
+                              icon: Icons.calendar_month,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _buildActionPicker(
+                              label: 'End Date',
+                              value: _selectedEndDate,
+                              onTap: _selectEndDate,
+                              icon: Icons.event_available,
+                            ),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 16),
                       Row(
                         children: [
@@ -674,19 +742,46 @@ class _AddMedicinePageState extends State<AddMedicinePage> {
             ),
           ),
         ),
-        if (showCountBadge && _savedReminderTimes.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Text(
-              _selectedReminder.isNotEmpty
-                  ? _selectedReminder
-                  : _savedReminderTimes.take(_getDoseCount()).join(' • '),
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-              ),
-            ),
+      ],
+    );
+  }
+
+  Widget _buildRecurrenceDropdown() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Repeat',
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
           ),
+          child: DropdownButtonFormField<String>(
+            value: _selectedRecurrence,
+            dropdownColor: Colors.white,
+            icon: const Icon(Icons.repeat, color: AppColors.primary),
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              hintText: 'Select repeat',
+            ),
+            items: ['Daily', 'Weekly', 'Monthly']
+                .map(
+                  (option) =>
+                      DropdownMenuItem(value: option, child: Text(option)),
+                )
+                .toList(),
+            onChanged: (value) {
+              if (value == null) return;
+              setState(() => _selectedRecurrence = value);
+            },
+          ),
+        ),
       ],
     );
   }

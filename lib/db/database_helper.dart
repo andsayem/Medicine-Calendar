@@ -27,7 +27,7 @@ class DatabaseHelper {
     final path = join(dbPath, fileName);
     return await openDatabase(
       path,
-      version: 8,
+      version: 9,
       onCreate: _createDatabase,
       onUpgrade: _upgradeDatabase,
     );
@@ -141,6 +141,17 @@ class DatabaseHelper {
         )
       ''');
     }
+    if (oldVersion < 9) {
+      await db.execute(
+        'ALTER TABLE ${Constants.medicinesTable} ADD COLUMN recurrence TEXT DEFAULT "Daily"',
+      );
+      await db.execute(
+        'ALTER TABLE ${Constants.medicinesTable} ADD COLUMN schedule_start_date TEXT DEFAULT ""',
+      );
+      await db.execute(
+        'ALTER TABLE ${Constants.medicinesTable} ADD COLUMN schedule_end_date TEXT DEFAULT ""',
+      );
+    }
   }
 
   Future<void> _createDatabase(Database db, int version) async {
@@ -155,6 +166,9 @@ class DatabaseHelper {
         notes TEXT,
         image TEXT,
         reminder_time TEXT,
+        recurrence TEXT DEFAULT 'Daily',
+        schedule_start_date TEXT DEFAULT '',
+        schedule_end_date TEXT DEFAULT '',
         expiry_date TEXT,
         patient TEXT DEFAULT 'Self',
         created_at TEXT,

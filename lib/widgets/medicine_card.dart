@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../models/medicine_model.dart';
-import '../screens/medicine/medicine_details_page.dart';
+import '../screens/medicine_details_page.dart';
 import '../utils/app_colors.dart';
 
 class MedicineCard extends StatelessWidget {

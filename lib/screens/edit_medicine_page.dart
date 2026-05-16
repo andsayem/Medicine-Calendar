@@ -28,6 +28,9 @@ class _EditMedicinePageState extends State<EditMedicinePage> {
   late final TextEditingController _notesController;
   late String _selectedPrescription;
   late String _selectedReminder;
+  late String _selectedRecurrence;
+  late String _selectedStartDate;
+  late String _selectedEndDate;
   late String _selectedExpiry;
   late String _imagePath;
   bool _showSchedule = false;
@@ -58,6 +61,11 @@ class _EditMedicinePageState extends State<EditMedicinePage> {
     _notesController = TextEditingController(text: widget.medicine.notes);
     _selectedPrescription = widget.medicine.prescription;
     _selectedReminder = widget.medicine.reminderTime;
+    _selectedRecurrence = widget.medicine.recurrence.isNotEmpty
+        ? widget.medicine.recurrence
+        : 'Daily';
+    _selectedStartDate = widget.medicine.scheduleStartDate;
+    _selectedEndDate = widget.medicine.scheduleEndDate;
     _selectedExpiry = widget.medicine.expiryDate;
     _imagePath = widget.medicine.image;
 
@@ -125,6 +133,44 @@ class _EditMedicinePageState extends State<EditMedicinePage> {
     });
   }
 
+  Future<void> _selectStartDate() async {
+    final initial = _selectedStartDate.isNotEmpty
+        ? DateTime.tryParse(_selectedStartDate) ?? DateTime.now()
+        : DateTime.now();
+    final date = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 3650)),
+    );
+    if (date == null) return;
+    setState(() {
+      _selectedStartDate = DateFormat('yyyy-MM-dd').format(date);
+      if (_selectedEndDate.isNotEmpty) {
+        final end = DateTime.tryParse(_selectedEndDate);
+        if (end != null && end.isBefore(date)) {
+          _selectedEndDate = '';
+        }
+      }
+    });
+  }
+
+  Future<void> _selectEndDate() async {
+    final first = _selectedStartDate.isNotEmpty
+        ? DateTime.tryParse(_selectedStartDate) ?? DateTime.now()
+        : DateTime.now();
+    final date = await showDatePicker(
+      context: context,
+      initialDate: first.add(const Duration(days: 1)),
+      firstDate: first,
+      lastDate: DateTime.now().add(const Duration(days: 3650)),
+    );
+    if (date == null) return;
+    setState(() {
+      _selectedEndDate = DateFormat('yyyy-MM-dd').format(date);
+    });
+  }
+
   Future<void> _selectExpiryDate() async {
     final current = widget.medicine.expiryDate.isNotEmpty
         ? DateTime.tryParse(widget.medicine.expiryDate) ?? DateTime.now()
@@ -161,6 +207,9 @@ class _EditMedicinePageState extends State<EditMedicinePage> {
       notes: _notesController.text.trim(),
       image: _imagePath,
       reminderTime: _selectedReminder,
+      recurrence: _selectedRecurrence,
+      scheduleStartDate: _selectedStartDate,
+      scheduleEndDate: _selectedEndDate,
       expiryDate: _selectedExpiry,
     );
     await provider.updateMedicine(updated);

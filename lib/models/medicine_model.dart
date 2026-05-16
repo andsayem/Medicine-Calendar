@@ -10,6 +10,9 @@ class Medicine {
   final String notes;
   final String image;
   final String reminderTime;
+  final String recurrence;
+  final String scheduleStartDate;
+  final String scheduleEndDate;
   final String expiryDate;
   final String patient;
   final String createdAt;
@@ -25,6 +28,9 @@ class Medicine {
     required this.notes,
     required this.image,
     required this.reminderTime,
+    required this.recurrence,
+    required this.scheduleStartDate,
+    required this.scheduleEndDate,
     required this.expiryDate,
     this.patient = 'Self',
     required this.createdAt,
@@ -42,6 +48,9 @@ class Medicine {
       notes: map['notes'] as String? ?? '',
       image: map['image'] as String? ?? '',
       reminderTime: map['reminder_time'] as String? ?? '',
+      recurrence: map['recurrence'] as String? ?? 'Daily',
+      scheduleStartDate: map['schedule_start_date'] as String? ?? '',
+      scheduleEndDate: map['schedule_end_date'] as String? ?? '',
       expiryDate: map['expiry_date'] as String? ?? '',
       patient: map['patient'] as String? ?? 'Self',
       createdAt: map['created_at'] as String? ?? '',
@@ -60,6 +69,9 @@ class Medicine {
       'notes': notes,
       'image': image,
       'reminder_time': reminderTime,
+      'recurrence': recurrence,
+      'schedule_start_date': scheduleStartDate,
+      'schedule_end_date': scheduleEndDate,
       'expiry_date': expiryDate,
       'patient': patient,
       'created_at': createdAt,
@@ -77,6 +89,9 @@ class Medicine {
     String? notes,
     String? image,
     String? reminderTime,
+    String? recurrence,
+    String? scheduleStartDate,
+    String? scheduleEndDate,
     String? expiryDate,
     String? patient,
     String? createdAt,
@@ -92,6 +107,9 @@ class Medicine {
       notes: notes ?? this.notes,
       image: image ?? this.image,
       reminderTime: reminderTime ?? this.reminderTime,
+      recurrence: recurrence ?? this.recurrence,
+      scheduleStartDate: scheduleStartDate ?? this.scheduleStartDate,
+      scheduleEndDate: scheduleEndDate ?? this.scheduleEndDate,
       expiryDate: expiryDate ?? this.expiryDate,
       patient: patient ?? this.patient,
       createdAt: createdAt ?? this.createdAt,
