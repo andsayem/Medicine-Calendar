@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -160,6 +161,7 @@ class NotificationService {
           hour: item['hour'] as int,
 
           minute: item['minute'] as int,
+          imagePath: medicine.image.isNotEmpty ? medicine.image : null,
         );
       }
     }
@@ -175,7 +177,20 @@ class NotificationService {
     required String body,
     required int hour,
     required int minute,
+    String? imagePath,
   }) async {
+    // Resolve image: if it's a network URL, download to a temporary file;
+    // if it's a local path, keep as is. If not found, set to null.
+    String? resolvedImagePath;
+    try {
+      if (imagePath != null && imagePath.isNotEmpty) {
+        resolvedImagePath = await _resolveImagePath(imagePath);
+        print('Notification image resolved: $resolvedImagePath');
+      }
+    } catch (e) {
+      print('Failed to resolve image for notification: $e');
+      resolvedImagePath = null;
+    }
     final now = tz.TZDateTime.now(tz.local);
 
     var scheduled = tz.TZDateTime(
@@ -196,7 +211,11 @@ class NotificationService {
       title,
       body,
       scheduled,
-      _notificationDetails(),
+      _notificationDetails(
+        imagePath: resolvedImagePath,
+        title: title,
+        body: body,
+      ),
 
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
 
@@ -207,28 +226,90 @@ class NotificationService {
     );
   }
 
+  Future<String?> _resolveImagePath(String image) async {
+    // If it's a network URL, download to temp file
+    if (image.startsWith('http://') || image.startsWith('https://')) {
+      try {
+        final uri = Uri.parse(image);
+        final httpClient = HttpClient();
+        final request = await httpClient.getUrl(uri);
+        final response = await request.close();
+        if (response.statusCode == 200) {
+          final bytes = await consolidateHttpClientResponseBytes(response);
+          final tempDir = Directory.systemTemp.createTempSync('med_img_');
+          final file = File(
+            '${tempDir.path}/${uri.pathSegments.isNotEmpty ? uri.pathSegments.last : 'image.jpg'}',
+          );
+          await file.writeAsBytes(bytes);
+          return file.path;
+        }
+      } catch (e) {
+        print('Download failed: $e');
+        return null;
+      }
+    }
+
+    // If it's a local file path, verify it exists
+    final local = File(image);
+    if (local.existsSync()) return local.path;
+
+    return null;
+  }
+
   /// ===============================
   /// NOTIFICATION STYLE
   /// ===============================
 
-  NotificationDetails _notificationDetails() {
-    const androidDetails = AndroidNotificationDetails(
+  NotificationDetails _notificationDetails({
+    String? imagePath,
+    String? title,
+    String? body,
+  }) {
+    // If an image path is provided and the file exists, show a big picture style notification
+    if (imagePath != null && File(imagePath).existsSync()) {
+      final style = BigPictureStyleInformation(
+        FilePathAndroidBitmap(imagePath),
+        largeIcon: FilePathAndroidBitmap(imagePath),
+        contentTitle: title,
+        summaryText: body,
+      );
+
+      final androidDetails = AndroidNotificationDetails(
+        'medicine_channel',
+        'Medicine Reminder',
+        icon: '@mipmap/launcher_icon',
+        channelDescription: 'Medicine reminder notifications',
+        importance: Importance.max,
+        priority: Priority.high,
+        playSound: true,
+        enableVibration: true,
+        category: AndroidNotificationCategory.alarm,
+        styleInformation: style,
+      );
+
+      final iosDetails = DarwinNotificationDetails(
+        attachments: [DarwinNotificationAttachment(imagePath)],
+      );
+
+      return NotificationDetails(android: androidDetails, iOS: iosDetails);
+    }
+
+    // Default notification details
+    final androidDetails = AndroidNotificationDetails(
       'medicine_channel',
       'Medicine Reminder',
       icon: '@mipmap/launcher_icon',
       channelDescription: 'Medicine reminder notifications',
       importance: Importance.max,
       priority: Priority.high,
-
       playSound: true,
       enableVibration: true,
-
       category: AndroidNotificationCategory.alarm,
     );
 
-    const iosDetails = DarwinNotificationDetails();
+    final iosDetails = DarwinNotificationDetails();
 
-    return const NotificationDetails(android: androidDetails, iOS: iosDetails);
+    return NotificationDetails(android: androidDetails, iOS: iosDetails);
   }
 
   /// ===============================
