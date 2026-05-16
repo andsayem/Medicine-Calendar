@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/medicine_provider.dart';
+import '../screens/backup_screen.dart';
 import '../services/notification_service.dart';
 import '../utils/app_colors.dart';
 
@@ -14,15 +15,61 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   late Future<List<Map<String, dynamic>>> _scheduleFuture;
+  bool _notificationsEnabled = true;
+  bool _soundEnabled = true;
 
   @override
   void initState() {
     super.initState();
     _loadSchedules();
+    _loadNotificationPreferences();
   }
 
   void _loadSchedules() {
     _scheduleFuture = NotificationService.instance.getReminderSchedule();
+  }
+
+  Future<void> _loadNotificationPreferences() async {
+    final enabled = await NotificationService.instance
+        .getNotificationsEnabled();
+    final sound = await NotificationService.instance.getSoundEnabled();
+    if (!mounted) return;
+    setState(() {
+      _notificationsEnabled = enabled;
+      _soundEnabled = sound;
+    });
+  }
+
+  Future<void> _setNotificationsEnabled(
+    bool enabled,
+    MedicineProvider provider,
+  ) async {
+    await NotificationService.instance.setNotificationsEnabled(enabled);
+
+    if (!enabled) {
+      await NotificationService.instance.cancelAll();
+    } else {
+      await NotificationService.instance.rescheduleMedicines(
+        provider.medicines,
+      );
+      await provider.refreshNextDoseMedicines();
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _notificationsEnabled = enabled;
+    });
+  }
+
+  Future<void> _setSoundEnabled(bool enabled, MedicineProvider provider) async {
+    await NotificationService.instance.setSoundEnabled(enabled);
+    await NotificationService.instance.cancelAll();
+    await NotificationService.instance.rescheduleMedicines(provider.medicines);
+
+    if (!mounted) return;
+    setState(() {
+      _soundEnabled = enabled;
+    });
   }
 
   Future<void> _changeReminderTime({
@@ -115,7 +162,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 provider.toggleTheme();
               },
 
-              activeColor: AppColors.primary,
+              activeThumbColor: AppColors.primary,
 
               title: const Text(
                 "Dark Mode",
@@ -123,6 +170,43 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
 
               subtitle: const Text("Enable dark theme"),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          _sectionTitle("Notifications"),
+
+          const SizedBox(height: 10),
+
+          _card(
+            child: Column(
+              children: [
+                SwitchListTile(
+                  value: _notificationsEnabled,
+                  activeThumbColor: AppColors.primary,
+                  title: const Text(
+                    "Medicine Notifications",
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: const Text("Enable or disable reminder alerts"),
+                  onChanged: (value) =>
+                      _setNotificationsEnabled(value, provider),
+                ),
+                const Divider(height: 1),
+                SwitchListTile(
+                  value: _soundEnabled,
+                  activeThumbColor: AppColors.primary,
+                  title: const Text(
+                    "Notification Sound",
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: const Text("Turn notification sound on or off"),
+                  onChanged: _notificationsEnabled
+                      ? (value) => _setSoundEnabled(value, provider)
+                      : null,
+                ),
+              ],
             ),
           ),
 
@@ -282,7 +366,12 @@ class _SettingsPageState extends State<SettingsPage> {
 
                   trailing: const Icon(Icons.arrow_forward_ios, size: 14),
 
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const BackupScreen()),
+                    );
+                  },
                 ),
 
                 const Divider(height: 1),

@@ -14,6 +14,9 @@ class NotificationService {
 
   static final NotificationService instance = NotificationService._internal();
 
+  static const String _notificationEnabledKey = 'notifications_enabled';
+  static const String _soundEnabledKey = 'notification_sound_enabled';
+
   final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
@@ -127,6 +130,26 @@ class NotificationService {
     return updated;
   }
 
+  Future<bool> getNotificationsEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_notificationEnabledKey) ?? true;
+  }
+
+  Future<void> setNotificationsEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_notificationEnabledKey, enabled);
+  }
+
+  Future<bool> getSoundEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_soundEnabledKey) ?? true;
+  }
+
+  Future<void> setSoundEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_soundEnabledKey, enabled);
+  }
+
   /// ===============================
   /// SCHEDULE MEDICINE
   /// ===============================
@@ -135,6 +158,9 @@ class NotificationService {
     if (medicine.id == null || medicine.dosage.isEmpty) {
       return;
     }
+
+    final enabled = await getNotificationsEnabled();
+    if (!enabled) return;
 
     final parts = medicine.dosage.split('+');
 
@@ -206,6 +232,8 @@ class NotificationService {
       scheduled = scheduled.add(const Duration(days: 1));
     }
 
+    final soundEnabled = await getSoundEnabled();
+
     await _notificationsPlugin.zonedSchedule(
       id,
       title,
@@ -215,6 +243,7 @@ class NotificationService {
         imagePath: resolvedImagePath,
         title: title,
         body: body,
+        soundEnabled: soundEnabled,
       ),
 
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -264,6 +293,7 @@ class NotificationService {
     String? imagePath,
     String? title,
     String? body,
+    bool soundEnabled = true,
   }) {
     // If an image path is provided and the file exists, show a big picture style notification
     if (imagePath != null && File(imagePath).existsSync()) {
@@ -281,7 +311,7 @@ class NotificationService {
         channelDescription: 'Medicine reminder notifications',
         importance: Importance.max,
         priority: Priority.high,
-        playSound: true,
+        playSound: soundEnabled,
         enableVibration: true,
         category: AndroidNotificationCategory.alarm,
         styleInformation: style,
@@ -289,6 +319,7 @@ class NotificationService {
 
       final iosDetails = DarwinNotificationDetails(
         attachments: [DarwinNotificationAttachment(imagePath)],
+        presentSound: soundEnabled,
       );
 
       return NotificationDetails(android: androidDetails, iOS: iosDetails);
@@ -302,12 +333,12 @@ class NotificationService {
       channelDescription: 'Medicine reminder notifications',
       importance: Importance.max,
       priority: Priority.high,
-      playSound: true,
+      playSound: soundEnabled,
       enableVibration: true,
       category: AndroidNotificationCategory.alarm,
     );
 
-    final iosDetails = DarwinNotificationDetails();
+    final iosDetails = DarwinNotificationDetails(presentSound: soundEnabled);
 
     return NotificationDetails(android: androidDetails, iOS: iosDetails);
   }
@@ -317,18 +348,24 @@ class NotificationService {
   /// ===============================
 
   Future<void> showTestNotification() async {
-    const androidDetails = AndroidNotificationDetails(
+    final soundEnabled = await getSoundEnabled();
+
+    final androidDetails = AndroidNotificationDetails(
       'medicine_channel',
       'Medicine Reminder',
       icon: '@mipmap/launcher_icon',
       channelDescription: 'Medicine reminder notifications',
       importance: Importance.max,
       priority: Priority.high,
-
-      playSound: true,
+      playSound: soundEnabled,
     );
 
-    const notificationDetails = NotificationDetails(android: androidDetails);
+    final iosDetails = DarwinNotificationDetails(presentSound: soundEnabled);
+
+    final notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
 
     await _notificationsPlugin.show(
       0,
