@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:medi_reminder/common/admob_helper.dart';
 import 'package:provider/provider.dart';
 
 import 'providers/medicine_provider.dart';
@@ -10,6 +12,19 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await NotificationService.instance.initialize();
+  // Initialize AdMob
+  await MobileAds.instance.initialize();
+  final adHelper = AdmobHelper();
+  // lifecycle observer
+  WidgetsBinding.instance.addObserver(adHelper);
+  // ✅ app open ad
+  adHelper.loadAppOpenAd(
+    onLoaded: () {
+      Future.delayed(const Duration(seconds: 2), () {
+        AdmobHelper.showAppOpenAd();
+      });
+    },
+  );
 
   runApp(
     ChangeNotifierProvider(
